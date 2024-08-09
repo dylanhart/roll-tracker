@@ -1,9 +1,9 @@
-/** TODO: 
+/** TODO:
  * SETTINGS - CAN PLAYERS CLEAR THEIR OWN ROLLS? TREAT FORTUNE/MISFORTUNE AS ONLY THE ROLL TAKEN OR BOTH ROLLED?
  * * HAVE CHECKBOXES FOR WHAT KIND OF ROLLS ARE CONSIDERED - VERY SYSTEM SPECIFIC
  * SIZE OF DICE TO BE TRACKED
  * NEW FEATURES - One click clear everyone's rolls
- *              - Session logs - collect all the rolls for a given log in session and store it. Access past session logs, maybe you can combine them. 
+ *              - Session logs - collect all the rolls for a given log in session and store it. Access past session logs, maybe you can combine them.
  */
 
 /** QUESTIONS:
@@ -26,18 +26,18 @@ Hooks.on('renderPlayerList', (playerList, html) => {
         if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.GM_SEE_PLAYERS)) {
             // This adds our icon to ALL players on the player list, if the setting is toggled
             // tooltip
-                const tooltip = game.i18n.localize('ROLL-TRACKER.button-title')
+            const tooltip = game.i18n.localize('ROLL-TRACKER.button-title')
             // create the button where we want it to be
-                for (let user of game.users) {
-                    const buttonPlacement = html.find(`[data-user-id="${user.id}"]`)
-                    buttonPlacement.append(
-                        `<button type="button" title='${tooltip}' class="roll-tracker-item-button flex0" id="${user.id}"><i class="fas fa-dice-d20"></i></button>`
-                    )
-                    html.on('click', `#${user.id}`, (event) => {
-                        new RollTrackerDialog(user.id).render(true);
-                    })
-                }
+            for (let user of game.users) {
+                const buttonPlacement = html.find(`[data-user-id="${user.id}"]`)
+                buttonPlacement.append(
+                    `<button type="button" title='${tooltip}' class="roll-tracker-item-button flex0" id="${user.id}"><i class="fas fa-dice-d20"></i></button>`
+                )
+                html.on('click', `#${user.id}`, (event) => {
+                    new RollTrackerDialog(user.id).render(true);
+                })
             }
+        }
         else {
             // Put the roll tracker icon only beside the GM's name
             const loggedInUser = html.find(`[data-user-id="${game.userId}"]`)
@@ -52,8 +52,8 @@ Hooks.on('renderPlayerList', (playerList, html) => {
             })
         }
     }
-     else if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PLAYERS_SEE_PLAYERS)) {
-    // find the element which has our logged in user's id
+    else if (game.settings.get(RollTracker.ID, RollTracker.SETTINGS.PLAYERS_SEE_PLAYERS)) {
+        // find the element which has our logged in user's id
         const loggedInUser = html.find(`[data-user-id="${game.userId}"]`)
 
         const tooltip = game.i18n.localize('ROLL-TRACKER.button-title')
@@ -85,7 +85,7 @@ Hooks.once('ready', () => {
         if (game.user.isGM) {
             ChatMessage.create(data)
         }
-    }) 
+    })
 })
 
 // The following helper functions help us to make and display the right strings for chat cards and the comparison card
@@ -125,7 +125,7 @@ Handlebars.registerHelper('isCombatToggled', function (value) {
 
 
 // Store basic module info
-class RollTracker { 
+class RollTracker {
     static ID = 'roll-tracker'
 
     static FLAGS = {
@@ -255,7 +255,7 @@ class RollTracker {
         })
 
         // System specific settings
-        switch(this.SYSTEM) {
+        switch (this.SYSTEM) {
             case 'dnd5e':
                 // A setting to specify that only rolls connected to an actor will be counted, not just
                 // random '/r 1d20s' or the like
@@ -280,7 +280,7 @@ class RollTracker {
                     hint: `ROLL-TRACKER.settings.pf2e.${this.SETTINGS.PF2E.RESTRICT_COUNTED_ROLLS}.Hint`,
                 })
                 break;
-        }   
+        }
     }
 
     // This function creates an object containing all the requirements that need to be met for the roll
@@ -314,7 +314,7 @@ class RollTracker {
         }
         const checksPassed = Object.values(rollRequirements).every(check => {
             return check === true
-        })            
+        })
         if (chatMessage.isContentVisible) await RollTrackerHelper.waitFor3DDiceMessage(chatMessage.id)
         if (checksPassed) {
             RollTrackerData.createTrackedRoll(chatMessage.user, chatMessage.rolls[0], isBlind)
@@ -323,50 +323,50 @@ class RollTracker {
 }
 
 class RollTrackerHelper {
-// Functions that don't specifically manipulate data but are referenced or used
+    // Functions that don't specifically manipulate data but are referenced or used
     // If Dice So Nice is enabled, this will help us wait until after the animation is shown
     // to send chat messages such as the Streak chat message, so we don't ruin the surprise of
     // the roll
     static async waitFor3DDiceMessage(targetMessageId) {
         function buildHook(resolve) {
-          Hooks.once('diceSoNiceRollComplete', (messageId) => {
-            if (targetMessageId === messageId)
-              resolve(true);
-            else
-              buildHook(resolve)
-          });
+            Hooks.once('diceSoNiceRollComplete', (messageId) => {
+                if (targetMessageId === messageId)
+                    resolve(true);
+                else
+                    buildHook(resolve)
+            });
         }
         return new Promise((resolve, reject) => {
-          if(game.dice3d){
-            buildHook(resolve);
-          } else {
-            resolve(true);
-          }
+            if (game.dice3d) {
+                buildHook(resolve);
+            } else {
+                resolve(true);
+            }
         });
-      }          
+    }
 }
 
-class RollTrackerData { 
-// Our main data workhorse class
+class RollTrackerData {
+    // Our main data workhorse class
     static getUserRolls(userId) {
-    // A simple retrieve method that gets the stored flag on a specified user
-         const output = {
-            user: game.users.get(userId),    
+        // A simple retrieve method that gets the stored flag on a specified user
+        const output = {
+            user: game.users.get(userId),
             sorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.SORTED),
             unsorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
             export: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
             streak: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
             combat: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.COMBAT)
-        } 
+        }
         return output
     }
 
     static createTrackedRoll(user, rollData, isBlind) {
         if (game.userId === user.id) {
-        // this check is necessary because (I think) every instance of foundry currently running tries
-        // to create and update these rolls. Players, however, do not have permission to edit the data
-        // of other users, so errors are thrown. This way the only foundry instance that creates the tracked
-        // roll is the foundry instance of the user actually making the roll
+            // this check is necessary because (I think) every instance of foundry currently running tries
+            // to create and update these rolls. Players, however, do not have permission to edit the data
+            // of other users, so errors are thrown. This way the only foundry instance that creates the tracked
+            // roll is the foundry instance of the user actually making the roll
             let updatedRolls = []
             let updatedCombatRolls = []
             const newNumbers = rollData.dice[0].results.map(result => result.result) // In case there's more than one d20 roll in a single instance as in fortune/misfortune rolls
@@ -382,7 +382,7 @@ class RollTrackerData {
                         return element === popped
                     })
                     oldSorted.splice(remove, 1)
-                }    
+                }
             }
             if (oldSorted.length) {
                 if (game.combat) {
@@ -413,14 +413,14 @@ class RollTrackerData {
 
                 const currentRoll = oldUnsorted.at(-1)
                 const prevRoll = oldUnsorted.at(-2)
-                if (prevRoll-1 <= currentRoll && currentRoll <= prevRoll+1) {
+                if (prevRoll - 1 <= currentRoll && currentRoll <= prevRoll + 1) {
                     if (!streak.numbers.length) streak.numbers.push(prevRoll)
                     streak.numbers.push(currentRoll)
                     const streakThreshold = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.STREAK_THRESHOLD)
                     if (streak.numbers.length >= streakThreshold) {
                         const streakString = streak.numbers.join(', ')
                         let chatOpts = {
-                            content: `<strong>${user.name} is on a streak!</strong> </br> ${streakString}`, speaker: {alias: 'Roll Tracker'}
+                            content: `<strong>${user.name} is on a streak!</strong> </br> ${streakString}`, speaker: { alias: 'Roll Tracker' }
                         }
 
                         // Follow the game setting concerning the visibility of streak messages
@@ -463,7 +463,7 @@ class RollTrackerData {
                 updatedRolls = newNumbers
                 oldUnsorted = newNumbers
             }
-            
+
             if (game.combat) {
                 return Promise.all([
                     game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.SORTED, updatedRolls),
@@ -479,10 +479,10 @@ class RollTrackerData {
         }
     }
 
-    static clearTrackedRolls(userId) { 
-    // Delete all stored rolls for a specified user ID
+    static clearTrackedRolls(userId) {
+        // Delete all stored rolls for a specified user ID
         return Promise.all([
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.SORTED), 
+            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.SORTED),
             game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
             game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
             game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
@@ -491,12 +491,12 @@ class RollTrackerData {
     }
 
     static sortRolls(rolls) {
-    // Used to sort the rolls in ascending order for the purposes of median calculation
+        // Used to sort the rolls in ascending order for the purposes of median calculation
         return rolls.sort((a, b) => a - b)
     }
 
-    static async prepTrackedRolls(userId, state) { 
-    // Package data for access via the FormApplication
+    static async prepTrackedRolls(userId, state) {
+        // Package data for access via the FormApplication
 
         const username = this.getUserRolls(userId).user.name
         const thisUserId = this.getUserRolls(userId).user.id
@@ -511,33 +511,35 @@ class RollTrackerData {
 
         if (!printRolls) {
             stats.mean = 0,
-            stats.median = 0,
-            stats.mode = [0],
-            stats.comparator = 0,
-            stats.nat1s = 0,
-            stats.nat1sPercentage = 0,
-            stats.nat20s = 0,
-            stats.nat20sPercentage = 0,
-            stats.count = 0
+                stats.median = 0,
+                stats.mode = [0],
+                stats.comparator = 0,
+                stats.nat1s = 0,
+                stats.nat1sPercentage = 0,
+                stats.nat20s = 0,
+                stats.nat20sPercentage = 0,
+                stats.count = 0
         } else {
             stats = await this.calculate(printRolls)
             // For debugging purposes primarily:
             // stats.lastRoll = this.getUserRolls(userId)?.unsorted.at(-1)
         }
-        
-        return { username, thisUserId, stats, state 
-            /**, averages */ }
+
+        return {
+            username, thisUserId, stats, state
+            /**, averages */
+}
     }
 
     static async calculate(rolls) {
-    // Turn the raw data array into usable stats:
-    // Mean
+        // Turn the raw data array into usable stats:
+        // Mean
         const sum = rolls.reduce((firstValue, secondValue) => {
             return firstValue + secondValue
         })
         const mean = Math.round(sum / rolls.length)
 
-    // Median
+        // Median
         // We've already sorted the rolls as they've come in
         let median = 0
 
@@ -545,34 +547,34 @@ class RollTrackerData {
         if (rolls.length % 2 === 1) {
             let medianPosition = Math.floor(rolls.length / 2)
             median = rolls[medianPosition]
-        // If there are an even number of rolls, the median is the average of the two
-        // centermost numbers
+            // If there are an even number of rolls, the median is the average of the two
+            // centermost numbers
         } else {
             let beforeMedian = (rolls.length / 2)
             let afterMedian = beforeMedian + 1
             // Subtracting one from each as we transition from length -> index
             // There's a shorter way of doing this but this makes the most sense to me for later
-            median = (rolls[beforeMedian-1] + rolls[afterMedian-1]) / 2
+            median = (rolls[beforeMedian - 1] + rolls[afterMedian - 1]) / 2
         }
-         
 
-    // Mode
+
+        // Mode
         const res = await this.calcMode(rolls)
         const modeObj = res.modeObj
         const mode = res.mode
         const comparator = res.comparator
 
-    // We prepare the export data file at this point because the data is conveniently
-    // ordered in modeObj
+        // We prepare the export data file at this point because the data is conveniently
+        // ordered in modeObj
         this.prepareExportData(modeObj)
 
-    // How many Nat1s or Nat20s do we have? Convert into % as well.
+        // How many Nat1s or Nat20s do we have? Convert into % as well.
         const nat1s = modeObj[1] || 0
         const nat1sPercentage = (Math.round((nat1s / rolls.length) * 100))
-        const nat20s = modeObj[20] || 0        
+        const nat20s = modeObj[20] || 0
         const nat20sPercentage = (Math.round((nat20s / rolls.length) * 100))
 
-    // How many rolls are being counted?
+        // How many rolls are being counted?
         const count = rolls.length
 
         return {
@@ -599,7 +601,7 @@ class RollTrackerData {
             }
         })
 
-    // the 'comparator' is the integer showing how many times the mode appears
+        // the 'comparator' is the integer showing how many times the mode appears
         let comparator = 0
 
         let mode = []
@@ -617,7 +619,7 @@ class RollTrackerData {
     }
 
     static prepareExportData(data) {
-    // prepare the roll data for export to an R-friendly text file
+        // prepare the roll data for export to an R-friendly text file
         const keys = Object.keys(data)
         let fileContent = ``
         for (let key of keys) {
@@ -634,7 +636,7 @@ class RollTrackerData {
      * various stats. Code exists to make the averages display alongside the individual player numbers
      * in the tracking card but I didn't like that
      * **/
-    
+
 
     static async generalComparison(state) {
         let allStats = {}
@@ -647,24 +649,24 @@ class RollTrackerData {
         }
         // highest/lowest of
 
-            const comparators = await this.statsCompare(allStats, 'comparator')
-            const means = await this.statsCompare(allStats, 'mean')
-            const medians = await this.statsCompare(allStats, 'median')
-            const nat1s = await this.statsCompare(allStats, 'nat1s')
-            const nat1sPercentage = await this.statsCompare(allStats, 'nat1sPercentage')
-            const nat20s = await this.statsCompare(allStats, 'nat20s')
-            const nat20sPercentage = await this.statsCompare(allStats, 'nat20sPercentage')
-            let finalComparison = {state: state}
-            this.prepStats(finalComparison, 'mean', means, allStats)
-            this.prepStats(finalComparison, 'median', medians, allStats)
-            this.prepStats(finalComparison, 'nat1s', nat1s, allStats)
-            this.prepStats(finalComparison, 'nat1sPercentage', nat1sPercentage, allStats)
-            this.prepStats(finalComparison, 'nat20s', nat20s, allStats)
-            this.prepStats(finalComparison, 'nat20sPercentage', nat20sPercentage, allStats)
-            this.prepMode(finalComparison, 'comparator', comparators, allStats)
+        const comparators = await this.statsCompare(allStats, 'comparator')
+        const means = await this.statsCompare(allStats, 'mean')
+        const medians = await this.statsCompare(allStats, 'median')
+        const nat1s = await this.statsCompare(allStats, 'nat1s')
+        const nat1sPercentage = await this.statsCompare(allStats, 'nat1sPercentage')
+        const nat20s = await this.statsCompare(allStats, 'nat20s')
+        const nat20sPercentage = await this.statsCompare(allStats, 'nat20sPercentage')
+        let finalComparison = { state: state }
+        this.prepStats(finalComparison, 'mean', means, allStats)
+        this.prepStats(finalComparison, 'median', medians, allStats)
+        this.prepStats(finalComparison, 'nat1s', nat1s, allStats)
+        this.prepStats(finalComparison, 'nat1sPercentage', nat1sPercentage, allStats)
+        this.prepStats(finalComparison, 'nat20s', nat20s, allStats)
+        this.prepStats(finalComparison, 'nat20sPercentage', nat20sPercentage, allStats)
+        this.prepMode(finalComparison, 'comparator', comparators, allStats)
 
-            return finalComparison
-    } 
+        return finalComparison
+    }
 
 
     // A general function to compare incoming 'stats' using a specific data object in the format
@@ -673,25 +675,25 @@ class RollTrackerData {
     static async statsCompare(allStats, stat) {
         let topStat = -1;
         let comparison = {}
-            for (let user in allStats) {
-                if (allStats[`${user}`][stat] > topStat) {
-                    topStat = allStats[`${user}`][stat]
-                    comparison.top = [user]
-                } else if (allStats[`${user}`][stat] === topStat) {
-                    comparison.top.push(user)
-                }
+        for (let user in allStats) {
+            if (allStats[`${user}`][stat] > topStat) {
+                topStat = allStats[`${user}`][stat]
+                comparison.top = [user]
+            } else if (allStats[`${user}`][stat] === topStat) {
+                comparison.top.push(user)
             }
+        }
 
         if (stat !== 'comparator') {
             let botStat = 9999;
-                for (let user in allStats) {
-                    if (allStats[`${user}`][stat] < botStat) {
-                        botStat = allStats[`${user}`][stat]
-                        comparison.bot = [user]
-                    } else if (allStats[`${user}`][stat] === botStat) {
-                        comparison.bot.push(user)
-                    }
+            for (let user in allStats) {
+                if (allStats[`${user}`][stat] < botStat) {
+                    botStat = allStats[`${user}`][stat]
+                    comparison.bot = [user]
+                } else if (allStats[`${user}`][stat] === botStat) {
+                    comparison.bot.push(user)
                 }
+            }
 
             let statSum = 0
             for (let user in allStats) {
@@ -700,17 +702,17 @@ class RollTrackerData {
             comparison.average = Math.round(statSum / (Object.keys(allStats).length))
         } else {
             topStat = -1;
-                for (let user in allStats) {
-                    let percentage = Math.round(((allStats[`${user}`][stat]) / (allStats[`${user}`].count)) * 100)
-                    if (percentage > topStat) {
-                        topStat = percentage
-                        comparison.topPercentage = [user]
-                    } else if (percentage === topStat) {
-                        comparison.topPercentage.push(user)
-                    }
+            for (let user in allStats) {
+                let percentage = Math.round(((allStats[`${user}`][stat]) / (allStats[`${user}`].count)) * 100)
+                if (percentage > topStat) {
+                    topStat = percentage
+                    comparison.topPercentage = [user]
+                } else if (percentage === topStat) {
+                    comparison.topPercentage.push(user)
                 }
+            }
         }
-        
+
         return comparison
     }
 
@@ -720,73 +722,73 @@ class RollTrackerData {
     static async prepStats(finalComparison, statName, statObj, allStats) {
 
         finalComparison[statName] = {}
-            finalComparison[statName].highest = []
-            finalComparison[statName].lowest = []
+        finalComparison[statName].highest = []
+        finalComparison[statName].lowest = []
 
-            for (let user of statObj.top) {
-                const userStats = {}
-                userStats.userId = `${user}`
-                userStats.name = game.users.get(`${user}`)?.name
-                userStats.value = allStats[`${user}`][statName]
-                userStats.rolls = allStats[`${user}`].count
-                finalComparison[statName].highest.push(userStats)
-            }
+        for (let user of statObj.top) {
+            const userStats = {}
+            userStats.userId = `${user}`
+            userStats.name = game.users.get(`${user}`)?.name
+            userStats.value = allStats[`${user}`][statName]
+            userStats.rolls = allStats[`${user}`].count
+            finalComparison[statName].highest.push(userStats)
+        }
 
-            for (let user of statObj.bot) {
-                const userStats = {}
-                userStats.userId = `${user}`
-                userStats.name = game.users.get(`${user}`)?.name
-                userStats.value = allStats[`${user}`][statName]
-                userStats.rolls = allStats[`${user}`].count
-                finalComparison[statName].lowest.push(userStats)
-            }
+        for (let user of statObj.bot) {
+            const userStats = {}
+            userStats.userId = `${user}`
+            userStats.name = game.users.get(`${user}`)?.name
+            userStats.value = allStats[`${user}`][statName]
+            userStats.rolls = allStats[`${user}`].count
+            finalComparison[statName].lowest.push(userStats)
+        }
 
-            finalComparison[statName].average = statObj.average
+        finalComparison[statName].average = statObj.average
     }
 
     // Mode has its own way to be prepped as it can be multimodal etc
     static async prepMode(finalComparison, comparator, comparators, allStats) {
         finalComparison[comparator] = {}
-            finalComparison[comparator].highest = {}
-            for (let user of comparators.top) {
-                finalComparison[comparator].highest.userId = `${user}`
-                finalComparison[comparator].highest.name = game.users.get(`${user}`)?.name
-                const mode = allStats[`${user}`].mode
-                let modeString = mode.join(', ')
-                if (mode.length > 1) {
-                    const orPosn = modeString.lastIndexOf(',')
-                    const firstHalf = modeString.slice(0, orPosn)
-                    const secondHalf = modeString.slice(orPosn+1)
-                    modeString = firstHalf.concat(' or', secondHalf)
-                }
-                finalComparison[comparator].highest.mode = modeString
-                finalComparison[comparator].highest.value = allStats[`${user}`][comparator]
-                finalComparison[comparator].highest.rolls = allStats[`${user}`].count
-                finalComparison[comparator].highest.percentage = Math.round((((finalComparison[comparator].highest.value) / (finalComparison[comparator].highest.rolls))) * 100)
+        finalComparison[comparator].highest = {}
+        for (let user of comparators.top) {
+            finalComparison[comparator].highest.userId = `${user}`
+            finalComparison[comparator].highest.name = game.users.get(`${user}`)?.name
+            const mode = allStats[`${user}`].mode
+            let modeString = mode.join(', ')
+            if (mode.length > 1) {
+                const orPosn = modeString.lastIndexOf(',')
+                const firstHalf = modeString.slice(0, orPosn)
+                const secondHalf = modeString.slice(orPosn + 1)
+                modeString = firstHalf.concat(' or', secondHalf)
             }
-            finalComparison[comparator].highestPercentage = {}
-            for (let user of comparators.topPercentage) {
-                finalComparison[comparator].highestPercentage.userId = `${user}`
-                finalComparison[comparator].highestPercentage.name = game.users.get(`${user}`)?.name
-                const mode = allStats[`${user}`].mode
-                let modeString = mode.join(', ')
-                if (mode.length > 1) {
-                    const orPosn = modeString.lastIndexOf(',')
-                    const firstHalf = modeString.slice(0, orPosn)
-                    const secondHalf = modeString.slice(orPosn+1)
-                    modeString = firstHalf.concat(', or', secondHalf)
-                }
-                finalComparison[comparator].highestPercentage.mode = modeString
-                finalComparison[comparator].highestPercentage.value = allStats[`${user}`][comparator]
-                finalComparison[comparator].highestPercentage.rolls = allStats[`${user}`].count
-                finalComparison[comparator].highestPercentage.percentage = Math.round((((finalComparison[comparator].highestPercentage.value) / (finalComparison[comparator].highestPercentage.rolls))) * 100)
+            finalComparison[comparator].highest.mode = modeString
+            finalComparison[comparator].highest.value = allStats[`${user}`][comparator]
+            finalComparison[comparator].highest.rolls = allStats[`${user}`].count
+            finalComparison[comparator].highest.percentage = Math.round((((finalComparison[comparator].highest.value) / (finalComparison[comparator].highest.rolls))) * 100)
+        }
+        finalComparison[comparator].highestPercentage = {}
+        for (let user of comparators.topPercentage) {
+            finalComparison[comparator].highestPercentage.userId = `${user}`
+            finalComparison[comparator].highestPercentage.name = game.users.get(`${user}`)?.name
+            const mode = allStats[`${user}`].mode
+            let modeString = mode.join(', ')
+            if (mode.length > 1) {
+                const orPosn = modeString.lastIndexOf(',')
+                const firstHalf = modeString.slice(0, orPosn)
+                const secondHalf = modeString.slice(orPosn + 1)
+                modeString = firstHalf.concat(', or', secondHalf)
             }
+            finalComparison[comparator].highestPercentage.mode = modeString
+            finalComparison[comparator].highestPercentage.value = allStats[`${user}`][comparator]
+            finalComparison[comparator].highestPercentage.rolls = allStats[`${user}`].count
+            finalComparison[comparator].highestPercentage.percentage = Math.round((((finalComparison[comparator].highestPercentage.value) / (finalComparison[comparator].highestPercentage.rolls))) * 100)
+        }
     }
 }
 
 class RollTrackerDialog extends FormApplication {
-    constructor(userId, options={}) {  
-    // the first argument is the object, the second are the options
+    constructor(userId, options = {}) {
+        // the first argument is the object, the second are the options
         super(userId, options)
     }
 
@@ -808,11 +810,11 @@ class RollTrackerDialog extends FormApplication {
         console.log(state)
         const rollData = await RollTrackerData.prepTrackedRolls(this.object, state)
 
-        // The lines below convert the mode array returned from prepTrackedRolls into a prettier 
+        // The lines below convert the mode array returned from prepTrackedRolls into a prettier
         // string for display purposes. We choose to do the conversion to string here so that the
-        // prepTrackedRolls func can continue to generate raw data which can be more easily 
+        // prepTrackedRolls func can continue to generate raw data which can be more easily
         // read/compared/manipulated, as in generalComparison()
-        
+
         const modeString = rollData.stats.mode.join(', ')
         // const modeString_averages = rollData.averages.mode.join(', ')
         rollData.stats.mode = modeString
@@ -824,13 +826,13 @@ class RollTrackerDialog extends FormApplication {
     async prepCompCard(state) {
         let comparison = await RollTrackerData.generalComparison(state)
         let content = await renderTemplate(RollTracker.TEMPLATES.COMPARISONCARD, comparison)
-        ChatMessage.create( { content } )
+        ChatMessage.create({ content })
     }
 
     activateListeners(html) {
         super.activateListeners(html);
 
-        // With the below function, we are specifying that for the _handleButtonClick function, 
+        // With the below function, we are specifying that for the _handleButtonClick function,
         // the keyword 'this' will refer to the current value of this as used in the bind function
         // i.e. RollTrackerDialog
         html.on('click', "[data-action]", this._handleButtonClick.bind(this))
@@ -857,14 +859,14 @@ class RollTrackerDialog extends FormApplication {
                 rollData.stats.mode = modeString
 
                 const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, rollData)
-                ChatMessage.create( { content } )
+                ChatMessage.create({ content })
                 break
-            } 
+            }
             case 'toggle': {
                 if (this.options.state === 'sorted') {
-                    this.render(false, {state: 'combat'})
+                    this.render(false, { state: 'combat' })
                 } else {
-                    this.render(false, {state: 'sorted'})
+                    this.render(false, { state: 'sorted' })
                 }
                 // const rollData = await RollTrackerData.prepTrackedRolls(this.object, 'combat')
                 // const modeString = rollData.stats.mode.join(', ')
