@@ -6,11 +6,6 @@
  *              - Session logs - collect all the rolls for a given log in session and store it. Access past session logs, maybe you can combine them.
  */
 
-/** QUESTIONS:
- * I DON'T UNDERSTAND HOW ROLLTRACKERHELPER.WAITFOR3DDICEMESSAGE ACTUALLY WORKS - WHAT DOES RESOLVE(TRUE) MEAN? DOESN'T IT BECOME
- * AN ENDLESS LOOP IF THE 'ELSE' OF THE FIRST CONDITIONAL JUST RUNS THE FUNCTION AGAIN?
- */
-
 // Whenever a chat message is created, check if it contains a roll. If so, parse it to determine
 // whether it should be tracked, according to our module settings
 Hooks.on('createChatMessage', (chatMessage) => {
@@ -34,7 +29,7 @@ Hooks.on('renderPlayerList', (playerList, html) => {
                     `<button type="button" title='${tooltip}' class="roll-tracker-item-button flex0" id="${user.id}"><i class="fas fa-dice-d20"></i></button>`
                 )
                 html.on('click', `#${user.id}`, (event) => {
-                    new RollTrackerDialog(user.id).render(true);
+                    new RollTrackerDialog(user).render(true);
                 })
             }
         }
@@ -48,7 +43,7 @@ Hooks.on('renderPlayerList', (playerList, html) => {
                 `<button type="button" title='${tooltip}' class="roll-tracker-item-button flex0" id="${game.userId}"><i class="fas fa-dice-d20"></i></button>`
             )
             html.on('click', `#${game.userId}`, (event) => {
-                new RollTrackerDialog(game.userId).render(true);
+                new RollTrackerDialog(game.user).render(true);
             })
         }
     }
@@ -62,7 +57,7 @@ Hooks.on('renderPlayerList', (playerList, html) => {
             `<button type="button" title='${tooltip}' class="roll-tracker-item-button flex0" id="${game.userId}"><i class="fas fa-dice-d20"></i></button>`
         )
         html.on('click', `#${game.userId}`, (event) => {
-            new RollTrackerDialog(game.userId).render(true);
+            new RollTrackerDialog(game.user).render(true);
         })
     }
 })
@@ -81,11 +76,11 @@ Hooks.once('init', () => {
 // This allows us to completely hide it from players if a part of the streak was blind, or if
 // the Hide All Streak Messages setting is enabled
 Hooks.once('ready', () => {
-    game.socket.on("module.roll-tracker", (data) => {
-        if (game.user.isGM) {
-            ChatMessage.create(data)
-        }
-    })
+    // game.socket.on("module.roll-tracker", (data) => {
+    //     if (game.user.isGM) {
+    //         ChatMessage.create(data)
+    //     }
+    // })
 })
 
 // The following helper functions help us to make and display the right strings for chat cards and the comparison card
@@ -129,17 +124,12 @@ class RollTracker {
     static ID = 'roll-tracker'
 
     static FLAGS = {
-        SORTED: 'sorted',
-        EXPORT: 'export',
-        UNSORTED: 'unsorted',
-        STREAK: 'streak',
-        COMBAT: 'combat'
+        ROLL_STATS: 'roll-stats',
     }
 
     static TEMPLATES = {
         ROLLTRACK: `modules/${this.ID}/templates/${this.ID}.hbs`,
         CHATMSG: `modules/${this.ID}/templates/${this.ID}-chat.hbs`,
-        COMPARISONCARD: `modules/${this.ID}/templates/${this.ID}-comparison-card.hbs`
     }
 
     // This logging function ties in with the Developer Mode module. It will log a custom, module namespaced
@@ -287,38 +277,46 @@ class RollTracker {
     // to be counted, taking into account all the currently active settings. If all of the conditions are
     // met, the roll is recorded.
     static async parseMessage(chatMessage, system) {
-        const isBlind = chatMessage.blind
-        const rollRequirements = {
-            isd20: chatMessage.rolls[0]?.dice[0]?.faces === 20,
-            blindCheck: (!isBlind) || (isBlind && game.settings.get(this.ID, this.SETTINGS.COUNT_HIDDEN)) || (isBlind && chatMessage.rolls[0]?.roller.isGM),
+        // Wait for 3d dice
+        if (chatMessage.isContentVisible) {
+            await RollTrackerHelper.waitFor3DDiceMessage(chatMessage.id);
         }
-        switch (system) {
-            case 'dnd5e':
-                if (game.settings.get(this.ID, this.SETTINGS.DND5E.RESTRICT_COUNTED_ROLLS)) {
-                    if (chatMessage.flags.dnd5e?.roll?.type) {
-                        rollRequirements.dnd5e_restrict_passed = true
-                    } else {
-                        rollRequirements.dnd5e_restrict_passed = false
+
+        const countHidden = game.settings.get(this.ID, this.SETTINGS.COUNT_HIDDEN);
+
+        chatMessage.rolls.forEach(roll => {
+            const isBlind = chatMessage.blind
+            const rollRequirements = {
+                blindCheck: (!isBlind || countHidden || roll.roller.isGM),
+            }
+            switch (system) {
+                case 'dnd5e':
+                    if (game.settings.get(this.ID, this.SETTINGS.DND5E.RESTRICT_COUNTED_ROLLS)) {
+                        if (chatMessage.flags.dnd5e?.roll?.type) {
+                            rollRequirements.dnd5e_restrict_passed = true
+                        } else {
+                            rollRequirements.dnd5e_restrict_passed = false
+                        }
                     }
-                }
-                break;
-            case 'pf2e':
-                if (game.settings.get(this.ID, this.SETTINGS.PF2E.RESTRICT_COUNTED_ROLLS)) {
-                    if (chatMessage.flags.pf2e?.context?.type) {
-                        rollRequirements.pf2e_restrict_passed = true
-                    } else {
-                        rollRequirements.pf2e_restrict_passed = false
+                    break;
+                case 'pf2e':
+                    if (game.settings.get(this.ID, this.SETTINGS.PF2E.RESTRICT_COUNTED_ROLLS)) {
+                        if (chatMessage.flags.pf2e?.context?.type) {
+                            rollRequirements.pf2e_restrict_passed = true
+                        } else {
+                            rollRequirements.pf2e_restrict_passed = false
+                        }
                     }
-                }
-                break;
-        }
-        const checksPassed = Object.values(rollRequirements).every(check => {
-            return check === true
-        })
-        if (chatMessage.isContentVisible) await RollTrackerHelper.waitFor3DDiceMessage(chatMessage.id)
-        if (checksPassed) {
-            RollTrackerData.createTrackedRoll(chatMessage.user, chatMessage.rolls[0], isBlind)
-        }
+                    break;
+            }
+            const checksPassed = Object.values(rollRequirements).every(check => {
+                return check === true
+            })
+
+            if (checksPassed) {
+                RollTrackerData.createTrackedRoll(chatMessage.user, roll, isBlind)
+            }
+        });
     }
 }
 
@@ -346,450 +344,163 @@ class RollTrackerHelper {
     }
 }
 
+class Streak {
+    constructor(last, count) {
+        this.last = last;
+        this.count = count;
+    }
+
+    static fromFlagData(flagData) {
+        return new Streak(flagData.last, flagData.count);
+    }
+
+    toFlagData() {
+        return {
+            last: this.last,
+            count: this.count,
+        };
+    }
+
+    update(number) {
+        if (number == this.last) {
+            this.count += 1;
+        } else {
+            this.last = number;
+            this.count = 1;
+        }
+    }
+
+    clear() {
+        this.last = null;
+        this.count = 0;
+    }
+}
+
+class RollStats {
+    constructor() {
+        this.histogram = new Array(20);
+        this.clear();
+    }
+
+    static fromFlagData(flagData) {
+        let rollStats = new RollStats();
+        rollStats.histogram = [...flagData.histogram];
+        rollStats.streak = Streak.fromFlagData(flagData.streak);
+        return rollStats;
+    }
+
+    toFlagData() {
+        return {
+            histogram: [...this.histogram],
+            streak: this.streak.toFlagData(),
+        };
+    }
+
+    update(number) {
+        this.histogram[number-1] += 1;
+        this.streak.update(number);
+    }
+
+    clear() {
+        this.histogram.fill(0, 0, 20);
+        this.streak = new Streak(null, 0);
+    }
+
+    get count() {
+        return this.histogram.reduce((acc, curr) => acc + curr, 0);
+    }
+
+    get nat1s() {
+        return this.histogram[0];
+    }
+
+    get nat20s() {
+        return this.histogram[19];
+    }
+
+    get sum() {
+        return this.histogram.reduce((acc, curr, idx) => acc + (curr * (idx + 1)), 0);
+    }
+
+    get mean() {
+        return this.count > 0 ? this.sum / this.count : 0;
+    }
+
+    get median() {
+        if (this.count == 0) {
+            return 0;
+        }
+
+        const mid = this.count / 2;
+
+        let pos = 0;
+        for (let i = 0; i < 20; i++) {
+            pos += this.histogram[i];
+            if (pos >= mid) {
+                return i + 1;
+            }
+        }
+    }
+
+    get mode() {
+        let modes = [];
+        let count = 0;
+        this.histogram.forEach((curr, idx) => {
+            if (curr > count) {
+                modes = [idx + 1];
+                count = curr
+            } else if (curr == count) {
+                modes.push(curr);
+            }
+        });
+
+        return { modes, count };
+    }
+}
+
 class RollTrackerData {
     // Our main data workhorse class
-    static getUserRolls(userId) {
-        // A simple retrieve method that gets the stored flag on a specified user
-        const output = {
-            user: game.users.get(userId),
-            sorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.SORTED),
-            unsorted: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
-            export: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
-            streak: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
-            combat: game.users.get(userId)?.getFlag(RollTracker.ID, RollTracker.FLAGS.COMBAT)
+    static readUserStats(user) {
+        const flagData = user.getFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS);
+        if (flagData == null) {
+            return new RollStats();
         }
-        return output
+        return RollStats.fromFlagData(flagData);
     }
 
-    static createTrackedRoll(user, rollData, isBlind) {
-        if (game.userId === user.id) {
-            // this check is necessary because (I think) every instance of foundry currently running tries
-            // to create and update these rolls. Players, however, do not have permission to edit the data
-            // of other users, so errors are thrown. This way the only foundry instance that creates the tracked
-            // roll is the foundry instance of the user actually making the roll
-            let updatedRolls = []
-            let updatedCombatRolls = []
-            const newNumbers = rollData.dice[0].results.map(result => result.result) // In case there's more than one d20 roll in a single instance as in fortune/misfortune rolls
-            let oldSorted = this.getUserRolls(user.id)?.sorted || []
-            let oldCombatSorted = this.getUserRolls(user.id)?.combat || []
-            let oldUnsorted = this.getUserRolls(user.id)?.unsorted || []
-            const limit = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.ROLL_STORAGE)
-            if (oldUnsorted.length >= limit) {
-                const difference = oldUnsorted.length - limit
-                for (let i = 0; i <= difference; i++) {
-                    const popped = oldUnsorted.shift()
-                    const remove = oldSorted.findIndex((element) => {
-                        return element === popped
-                    })
-                    oldSorted.splice(remove, 1)
-                }
-            }
-            if (oldSorted.length) {
-                if (game.combat) {
-                    if (oldCombatSorted.length) {
-                        updatedCombatRolls = [...oldCombatSorted]
-                    }
-                    newNumbers.forEach(e => {
-                        updatedCombatRolls.unshift(e)
-                        updatedCombatRolls = this.sortRolls(updatedCombatRolls)
-                    })
-                }
-                updatedRolls = [...oldSorted]
-                newNumbers.forEach(e => {
-                    updatedRolls.unshift(e)
-                    oldUnsorted.push(e)
-                    updatedRolls = this.sortRolls(updatedRolls)
-                })
-
-                // Streak calculations
-                let streak = {}
-
-                // If there was an ongoing streak, pull those numbers for comparison
-                streak.numbers = RollTrackerData.getUserRolls(user.id)?.streak?.numbers || []
-
-                // If the last roll made was a blind roll, the potential streak currently
-                // under examination includes a blind roll
-                streak.includesBlind = RollTrackerData.getUserRolls(user.id)?.streak?.includesBlind || isBlind
-
-                const currentRoll = oldUnsorted.at(-1)
-                const prevRoll = oldUnsorted.at(-2)
-                if (prevRoll - 1 <= currentRoll && currentRoll <= prevRoll + 1) {
-                    if (!streak.numbers.length) streak.numbers.push(prevRoll)
-                    streak.numbers.push(currentRoll)
-                    const streakThreshold = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.STREAK_THRESHOLD)
-                    if (streak.numbers.length >= streakThreshold) {
-                        const streakString = streak.numbers.join(', ')
-                        let chatOpts = {
-                            content: `<strong>${user.name} is on a streak!</strong> </br> ${streakString}`, speaker: { alias: 'Roll Tracker' }
-                        }
-
-                        // Follow the game setting concerning the visibility of streak messages
-                        //
-                        // If the current roll is blind, or the last roll was blind, the streak message (if generated)
-                        // is only whispered to the GM, as it may reveal earlier blind rolls
-                        const streakStatus = game.settings.get(RollTracker.ID, RollTracker.SETTINGS.STREAK_BEHAVIOUR)
-                        if (streakStatus !== 'disable') {
-                            if (streak.includesBlind || streakStatus === `hidden`) {
-                                const gms = game.users.filter(user => user.isGM === true)
-                                chatOpts.whisper = gms.map(gm => gm.id)
-                            }
-                            if (!game.user.isGM) {
-                                game.socket.emit("module.roll-tracker", chatOpts)
-                            } else {
-                                ChatMessage.create(chatOpts)
-                            }
-                        }
-                    }
-                } else {
-                    // If the last rolled number is not within 1 of the current rolled number, discard
-                    // the streak
-                    streak.numbers = []
-
-                    // If there is no current streak but the current current roll is blind, a potential future
-                    // streak includes a blind number.
-                    // However if there is no current streak and the current roll is NOT blind, reset the
-                    // variable tracking the presence of a blind roll in the streak
-                    if (isBlind) {
-                        streak.includesBlind = true
-                    } else {
-                        streak.includesBlind = false
-                    }
-                }
-                game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.STREAK, streak)
-                // end of streak calculations
-
-            } else {
-                if (game.combat) updatedCombatRolls = newNumbers
-                updatedRolls = newNumbers
-                oldUnsorted = newNumbers
-            }
-
-            if (game.combat) {
-                return Promise.all([
-                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.SORTED, updatedRolls),
-                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED, oldUnsorted),
-                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.COMBAT, updatedCombatRolls)
-                ])
-            } else {
-                return Promise.all([
-                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.SORTED, updatedRolls),
-                    game.users.get(user.id)?.setFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED, oldUnsorted),
-                ])
-            }
-        }
+    static async writeUserStats(rollStats) {
+        const flagData = rollStats.toFlagData();
+        return await user.setFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS, flagData);
     }
 
-    static clearTrackedRolls(userId) {
-        // Delete all stored rolls for a specified user ID
-        return Promise.all([
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.SORTED),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.UNSORTED),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.STREAK),
-            game.users.get(userId)?.unsetFlag(RollTracker.ID, RollTracker.FLAGS.COMBAT)
-        ])
+    static async clearTrackedRolls(user) {
+        return await user.unsetFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS);
     }
 
-    static sortRolls(rolls) {
-        // Used to sort the rolls in ascending order for the purposes of median calculation
-        return rolls.sort((a, b) => a - b)
-    }
-
-    static async prepTrackedRolls(userId, state) {
-        // Package data for access via the FormApplication
-
-        const username = this.getUserRolls(userId).user.name
-        const thisUserId = this.getUserRolls(userId).user.id
-        let printRolls
-        if (state === 'sorted') {
-            printRolls = this.getUserRolls(userId).sorted
-        } else if (state === 'combat') {
-            printRolls = this.getUserRolls(userId).combat
+    static async createTrackedRoll(user, roll, isBlind) {
+        // We are running client-side, so we should only update our own roll data.
+        if (game.userId !== user.id) {
+            return;
         }
 
-        let stats = {}
+        const stats = this.getUserStats(user);
 
-        if (!printRolls) {
-            stats.mean = 0,
-                stats.median = 0,
-                stats.mode = [0],
-                stats.comparator = 0,
-                stats.nat1s = 0,
-                stats.nat1sPercentage = 0,
-                stats.nat20s = 0,
-                stats.nat20sPercentage = 0,
-                stats.count = 0
-        } else {
-            stats = await this.calculate(printRolls)
-            // For debugging purposes primarily:
-            // stats.lastRoll = this.getUserRolls(userId)?.unsorted.at(-1)
-        }
-
-        return {
-            username, thisUserId, stats, state
-            /**, averages */
-}
-    }
-
-    static async calculate(rolls) {
-        // Turn the raw data array into usable stats:
-        // Mean
-        const sum = rolls.reduce((firstValue, secondValue) => {
-            return firstValue + secondValue
-        })
-        const mean = Math.round(sum / rolls.length)
-
-        // Median
-        // We've already sorted the rolls as they've come in
-        let median = 0
-
-        // If there are an odd number of rolls, the median is the centermost number
-        if (rolls.length % 2 === 1) {
-            let medianPosition = Math.floor(rolls.length / 2)
-            median = rolls[medianPosition]
-            // If there are an even number of rolls, the median is the average of the two
-            // centermost numbers
-        } else {
-            let beforeMedian = (rolls.length / 2)
-            let afterMedian = beforeMedian + 1
-            // Subtracting one from each as we transition from length -> index
-            // There's a shorter way of doing this but this makes the most sense to me for later
-            median = (rolls[beforeMedian - 1] + rolls[afterMedian - 1]) / 2
-        }
-
-
-        // Mode
-        const res = await this.calcMode(rolls)
-        const modeObj = res.modeObj
-        const mode = res.mode
-        const comparator = res.comparator
-
-        // We prepare the export data file at this point because the data is conveniently
-        // ordered in modeObj
-        this.prepareExportData(modeObj)
-
-        // How many Nat1s or Nat20s do we have? Convert into % as well.
-        const nat1s = modeObj[1] || 0
-        const nat1sPercentage = (Math.round((nat1s / rolls.length) * 100))
-        const nat20s = modeObj[20] || 0
-        const nat20sPercentage = (Math.round((nat20s / rolls.length) * 100))
-
-        // How many rolls are being counted?
-        const count = rolls.length
-
-        return {
-            mean,
-            median,
-            mode,
-            comparator,
-            nat1s,
-            nat1sPercentage,
-            nat20s,
-            nat20sPercentage,
-            count
-        }
-    }
-
-    static async calcMode(rolls) {
-        // Mode
-        let modeObj = {}
-        rolls.forEach(e => {
-            if (!modeObj[e]) {
-                modeObj[e] = 1
-            } else {
-                modeObj[e]++
-            }
-        })
-
-        // the 'comparator' is the integer showing how many times the mode appears
-        let comparator = 0
-
-        let mode = []
-        for (let rollNumber in modeObj) {
-            if (modeObj[rollNumber] > comparator) {
-                comparator = modeObj[rollNumber]
-                mode.splice(0)
-                mode.push(rollNumber)
-            } else if (modeObj[rollNumber] === comparator) {
-                mode.push(rollNumber)
-            }
-        }
-
-        return { modeObj, mode, comparator }
-    }
-
-    static prepareExportData(data) {
-        // prepare the roll data for export to an R-friendly text file
-        const keys = Object.keys(data)
-        let fileContent = ``
-        for (let key of keys) {
-            fileContent += `${key},${data[key]}\n`
-        }
-        // We store the filecontent on a flag on the user so it can be quickly accessed if the user
-        // decides to click the export button on the RollTrackerDialog header
-        game.users.get(game.userId)?.setFlag(RollTracker.ID, RollTracker.FLAGS.EXPORT, fileContent)
-    }
-
-    /**
-     *  COMPARATOR
-     * This function is meant to generate an overall picture across all players of rankings in the
-     * various stats. Code exists to make the averages display alongside the individual player numbers
-     * in the tracking card but I didn't like that
-     * **/
-
-
-    static async generalComparison(state) {
-        let allStats = {}
-        const capsState = state.toUpperCase()
-        for (let user of game.users) {
-            if (game.users.get(user.id)?.getFlag(RollTracker.ID, RollTracker.FLAGS[capsState])) {
-                const rolls = this.getUserRolls(user.id)?.[state]
-                allStats[`${user.id}`] = await this.calculate(rolls)
-            }
-        }
-        // highest/lowest of
-
-        const comparators = await this.statsCompare(allStats, 'comparator')
-        const means = await this.statsCompare(allStats, 'mean')
-        const medians = await this.statsCompare(allStats, 'median')
-        const nat1s = await this.statsCompare(allStats, 'nat1s')
-        const nat1sPercentage = await this.statsCompare(allStats, 'nat1sPercentage')
-        const nat20s = await this.statsCompare(allStats, 'nat20s')
-        const nat20sPercentage = await this.statsCompare(allStats, 'nat20sPercentage')
-        let finalComparison = { state: state }
-        this.prepStats(finalComparison, 'mean', means, allStats)
-        this.prepStats(finalComparison, 'median', medians, allStats)
-        this.prepStats(finalComparison, 'nat1s', nat1s, allStats)
-        this.prepStats(finalComparison, 'nat1sPercentage', nat1sPercentage, allStats)
-        this.prepStats(finalComparison, 'nat20s', nat20s, allStats)
-        this.prepStats(finalComparison, 'nat20sPercentage', nat20sPercentage, allStats)
-        this.prepMode(finalComparison, 'comparator', comparators, allStats)
-
-        return finalComparison
-    }
-
-
-    // A general function to compare incoming 'stats' using a specific data object in the format
-    // generated in the allStats variable of generalComparison()
-
-    static async statsCompare(allStats, stat) {
-        let topStat = -1;
-        let comparison = {}
-        for (let user in allStats) {
-            if (allStats[`${user}`][stat] > topStat) {
-                topStat = allStats[`${user}`][stat]
-                comparison.top = [user]
-            } else if (allStats[`${user}`][stat] === topStat) {
-                comparison.top.push(user)
-            }
-        }
-
-        if (stat !== 'comparator') {
-            let botStat = 9999;
-            for (let user in allStats) {
-                if (allStats[`${user}`][stat] < botStat) {
-                    botStat = allStats[`${user}`][stat]
-                    comparison.bot = [user]
-                } else if (allStats[`${user}`][stat] === botStat) {
-                    comparison.bot.push(user)
-                }
+        roll.dice.forEach(die => {
+            if (die.faces != 20) {
+                return;
             }
 
-            let statSum = 0
-            for (let user in allStats) {
-                statSum += allStats[`${user}`][stat]
-            }
-            comparison.average = Math.round(statSum / (Object.keys(allStats).length))
-        } else {
-            topStat = -1;
-            for (let user in allStats) {
-                let percentage = Math.round(((allStats[`${user}`][stat]) / (allStats[`${user}`].count)) * 100)
-                if (percentage > topStat) {
-                    topStat = percentage
-                    comparison.topPercentage = [user]
-                } else if (percentage === topStat) {
-                    comparison.topPercentage.push(user)
-                }
-            }
-        }
+            stats.update(number);
+        });
 
-        return comparison
-    }
-
-    // A function preparing the output object of generalComparison (the obj is called finalComparison)
-    // using previously calculated stats
-
-    static async prepStats(finalComparison, statName, statObj, allStats) {
-
-        finalComparison[statName] = {}
-        finalComparison[statName].highest = []
-        finalComparison[statName].lowest = []
-
-        for (let user of statObj.top) {
-            const userStats = {}
-            userStats.userId = `${user}`
-            userStats.name = game.users.get(`${user}`)?.name
-            userStats.value = allStats[`${user}`][statName]
-            userStats.rolls = allStats[`${user}`].count
-            finalComparison[statName].highest.push(userStats)
-        }
-
-        for (let user of statObj.bot) {
-            const userStats = {}
-            userStats.userId = `${user}`
-            userStats.name = game.users.get(`${user}`)?.name
-            userStats.value = allStats[`${user}`][statName]
-            userStats.rolls = allStats[`${user}`].count
-            finalComparison[statName].lowest.push(userStats)
-        }
-
-        finalComparison[statName].average = statObj.average
-    }
-
-    // Mode has its own way to be prepped as it can be multimodal etc
-    static async prepMode(finalComparison, comparator, comparators, allStats) {
-        finalComparison[comparator] = {}
-        finalComparison[comparator].highest = {}
-        for (let user of comparators.top) {
-            finalComparison[comparator].highest.userId = `${user}`
-            finalComparison[comparator].highest.name = game.users.get(`${user}`)?.name
-            const mode = allStats[`${user}`].mode
-            let modeString = mode.join(', ')
-            if (mode.length > 1) {
-                const orPosn = modeString.lastIndexOf(',')
-                const firstHalf = modeString.slice(0, orPosn)
-                const secondHalf = modeString.slice(orPosn + 1)
-                modeString = firstHalf.concat(' or', secondHalf)
-            }
-            finalComparison[comparator].highest.mode = modeString
-            finalComparison[comparator].highest.value = allStats[`${user}`][comparator]
-            finalComparison[comparator].highest.rolls = allStats[`${user}`].count
-            finalComparison[comparator].highest.percentage = Math.round((((finalComparison[comparator].highest.value) / (finalComparison[comparator].highest.rolls))) * 100)
-        }
-        finalComparison[comparator].highestPercentage = {}
-        for (let user of comparators.topPercentage) {
-            finalComparison[comparator].highestPercentage.userId = `${user}`
-            finalComparison[comparator].highestPercentage.name = game.users.get(`${user}`)?.name
-            const mode = allStats[`${user}`].mode
-            let modeString = mode.join(', ')
-            if (mode.length > 1) {
-                const orPosn = modeString.lastIndexOf(',')
-                const firstHalf = modeString.slice(0, orPosn)
-                const secondHalf = modeString.slice(orPosn + 1)
-                modeString = firstHalf.concat(', or', secondHalf)
-            }
-            finalComparison[comparator].highestPercentage.mode = modeString
-            finalComparison[comparator].highestPercentage.value = allStats[`${user}`][comparator]
-            finalComparison[comparator].highestPercentage.rolls = allStats[`${user}`].count
-            finalComparison[comparator].highestPercentage.percentage = Math.round((((finalComparison[comparator].highestPercentage.value) / (finalComparison[comparator].highestPercentage.rolls))) * 100)
-        }
+        user = await this.writeUserStats(stats);
     }
 }
 
 class RollTrackerDialog extends FormApplication {
-    constructor(userId, options = {}) {
+    constructor(user, options = {}) {
         // the first argument is the object, the second are the options
-        super(userId, options)
+        super(user, options)
     }
 
     static get defaultOptions() {
@@ -799,49 +510,31 @@ class RollTrackerDialog extends FormApplication {
             id: 'roll-tracker',
             template: RollTracker.TEMPLATES.ROLLTRACK,
             title: 'Roll Tracker',
-            state: 'sorted'
         }
         const mergedOptions = foundry.utils.mergeObject(defaults, overrides);
         return mergedOptions
     }
 
     async getData(options) {
-        const state = options.state
-        console.log(state)
-        const rollData = await RollTrackerData.prepTrackedRolls(this.object, state)
-
-        // The lines below convert the mode array returned from prepTrackedRolls into a prettier
-        // string for display purposes. We choose to do the conversion to string here so that the
-        // prepTrackedRolls func can continue to generate raw data which can be more easily
-        // read/compared/manipulated, as in generalComparison()
-
-        const modeString = rollData.stats.mode.join(', ')
-        // const modeString_averages = rollData.averages.mode.join(', ')
-        rollData.stats.mode = modeString
-        // rollData.averages.mode = modeString_averages
-
-        return rollData
-    }
-
-    async prepCompCard(state) {
-        let comparison = await RollTrackerData.generalComparison(state)
-        let content = await renderTemplate(RollTracker.TEMPLATES.COMPARISONCARD, comparison)
-        ChatMessage.create({ content })
+        return {
+            user: this.object,
+            stats: RollTrackerData.getUserStats(this.object),
+        };
     }
 
     activateListeners(html) {
         super.activateListeners(html);
 
-        // With the below function, we are specifying that for the _handleButtonClick function,
-        // the keyword 'this' will refer to the current value of this as used in the bind function
-        // i.e. RollTrackerDialog
-        html.on('click', "[data-action]", this._handleButtonClick.bind(this))
+        const clickHandler = this._handleButtonClick.bind(this);
+        html.querySelectorAll("[data-action]").forEach(btn => {
+            btn.addEventListener("click", clickHandler);
+        });
     }
 
     async _handleButtonClick(event) {
         const clickedElement = $(event.currentTarget)
         const action = clickedElement.data().action
-        const userId = clickedElement.parents(`[data-userId]`)?.data().userid
+        const user = this.object;
         switch (action) {
             case 'clear': {
                 const confirmed = await Dialog.confirm({
@@ -849,64 +542,17 @@ class RollTrackerDialog extends FormApplication {
                     content: game.i18n.localize("ROLL-TRACKER.confirms.clear_rolls.content"),
                 })
                 if (confirmed) {
-                    await RollTrackerData.clearTrackedRolls(userId)
+                    await RollTrackerData.clearTrackedRolls(user);
                     this.render();
                 }
                 break
-            } case 'print': {
-                const rollData = await RollTrackerData.prepTrackedRolls(this.object, this.options.state)
-                const modeString = rollData.stats.mode.join(', ')
-                rollData.stats.mode = modeString
-
-                const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, rollData)
+            }
+            case 'print': {
+                const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, this.getData());
                 ChatMessage.create({ content })
                 break
             }
-            case 'toggle': {
-                if (this.options.state === 'sorted') {
-                    this.render(false, { state: 'combat' })
-                } else {
-                    this.render(false, { state: 'sorted' })
-                }
-                // const rollData = await RollTrackerData.prepTrackedRolls(this.object, 'combat')
-                // const modeString = rollData.stats.mode.join(', ')
-                // rollData.stats.mode = modeString
-
-                // const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, rollData)
-                // ChatMessage.create( { content } )
-                break
-            }
         }
-    }
-
-    get exportData() {
-        return RollTrackerData.getUserRolls(game.userId)?.export
-    }
-
-    // This function gets the header data from FormApplication but modifies it to add our export button
-    _getHeaderButtons() {
-        let buttons = super._getHeaderButtons();
-        buttons.splice(0, 0, {
-            class: "roll-tracker-form-export",
-            icon: "fas fa-download",
-            onclick: ev => {
-                if (this.exportData) {
-                    saveDataToFile(this.exportData, 'string', 'roll-data.txt')
-                } else {
-                    return ui.notifications.warn("No roll data to export")
-                }
-            }
-        })
-        if (game.user.isGM) {
-            buttons.splice(1, 0, {
-                class: "roll-tracker-form-comparison",
-                icon: "fas fa-chart-simple",
-                onclick: ev => {
-                    this.prepCompCard(this.options.state)
-                }
-            })
-        }
-        return buttons
     }
 
 }
