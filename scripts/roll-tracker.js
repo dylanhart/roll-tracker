@@ -397,6 +397,10 @@ class RollStats {
     }
 
     update(number) {
+        if (number < 1 || number > 20) {
+            throw new Error("Dice value out of range: " + number);
+        }
+
         this.histogram[number-1] += 1;
         this.streak.update(number);
     }
@@ -443,6 +447,13 @@ class RollStats {
     }
 
     get mode() {
+        if (this.count == 0) {
+            return {
+                modes: [],
+                count: 0
+            };
+        }
+
         let modes = [];
         let count = 0;
         this.histogram.forEach((curr, idx) => {
@@ -450,7 +461,7 @@ class RollStats {
                 modes = [idx + 1];
                 count = curr
             } else if (curr == count) {
-                modes.push(curr);
+                modes.push(idx + 1);
             }
         });
 
@@ -468,7 +479,7 @@ class RollTrackerData {
         return RollStats.fromFlagData(flagData);
     }
 
-    static async writeUserStats(rollStats) {
+    static async writeUserStats(user, rollStats) {
         const flagData = rollStats.toFlagData();
         return await user.setFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS, flagData);
     }
@@ -483,17 +494,17 @@ class RollTrackerData {
             return;
         }
 
-        const stats = this.getUserStats(user);
+        const stats = this.readUserStats(user);
 
         roll.dice.forEach(die => {
             if (die.faces != 20) {
                 return;
             }
 
-            stats.update(number);
+            die.results.forEach(res => stats.update(res.result));
         });
 
-        user = await this.writeUserStats(stats);
+        user = await this.writeUserStats(user, stats);
     }
 }
 
@@ -518,7 +529,7 @@ class RollTrackerDialog extends FormApplication {
     async getData(options) {
         return {
             user: this.object,
-            stats: RollTrackerData.getUserStats(this.object),
+            stats: RollTrackerData.readUserStats(this.object),
         };
     }
 
@@ -526,9 +537,7 @@ class RollTrackerDialog extends FormApplication {
         super.activateListeners(html);
 
         const clickHandler = this._handleButtonClick.bind(this);
-        html.querySelectorAll("[data-action]").forEach(btn => {
-            btn.addEventListener("click", clickHandler);
-        });
+        html.on("click", "[data-action]", clickHandler);
     }
 
     async _handleButtonClick(event) {

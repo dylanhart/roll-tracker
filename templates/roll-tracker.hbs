@@ -4,7 +4,9 @@
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}}: </span>{{stats.mode.mode}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}}: </span>
+                {{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} ({{stats.mode.count}})
+            </li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{stats.nat20s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
