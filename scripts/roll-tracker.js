@@ -146,7 +146,6 @@ class RollTracker {
     static SETTINGS = {
         GM_SEE_PLAYERS: 'gm_see_players',
         PLAYERS_SEE_PLAYERS: 'players_see_players',
-        ROLL_STORAGE: 'roll_storage',
         COUNT_HIDDEN: 'count_hidden',
         STREAK_MESSAGE_HIDDEN: 'streak_message_hidden',
         STREAK_BEHAVIOUR: 'streak_behaviour',
@@ -174,21 +173,6 @@ class RollTracker {
             config: true,
             hint: `ROLL-TRACKER.settings.${this.SETTINGS.GM_SEE_PLAYERS}.Hint`,
             onChange: () => ui.players.render()
-        })
-
-        // A setting to determine how many rolls should be stored at any one time
-        game.settings.register(this.ID, this.SETTINGS.ROLL_STORAGE, {
-            name: `ROLL-TRACKER.settings.${this.SETTINGS.ROLL_STORAGE}.Name`,
-            default: 50,
-            type: Number,
-            range: {
-                min: 10,
-                max: 500,
-                step: 10
-            },
-            scope: 'world',
-            config: true,
-            hint: `ROLL-TRACKER.settings.${this.SETTINGS.ROLL_STORAGE}.Hint`,
         })
 
         // A setting to determine whether players can see their own tracked rolls
