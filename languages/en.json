@@ -9,45 +9,14 @@
             "nat20s": "Natural 20s",
             "lastRoll": "Last roll",
             "count": "Rolls Counted",
+            "streak": "Current Streak",
             "instance": "instance",
             "instances": "instances",
-            "each": "each",
-            "combatstats": "Combat Stats"
+            "each": "each"
         },
         "form-button": {
             "clear": "Clear Data",
-            "toggle-combat": "Show Only Combat Stats",
-            "toggle-all": "Show All Stats",
-            "download": "Download",
             "print": "Print to Chat"
-        },
-        "comparison-card": {
-            "title": "Comparison Card",
-            "combat-title": "Combat Comparison Card",
-            "headers": {
-                "mean": "Mean",
-                "median": "Median",
-                "mode": "Mode",
-                "nat1s": "Natural 1s",
-                "nat20s": "Natural 20s"
-            },
-            "descriptors": {
-                "highest": "Highest",
-                "lowest": "Lowest",
-                "most": "Most",
-                "fewest": "Fewest",
-                "raw": "Raw Numbers",
-                "percentage": "By Percentage"
-            },
-            "misc" : {
-                "and": "and",
-                "with": "with"
-            },
-            "mode": {
-                "most-frequent": "had the most frequent mode with",
-                "instances-of": "instances of",
-                "of-their-rolls": "of their rolls being"
-            }
         },
         "settings": {
             "gm_see_players": {

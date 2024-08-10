@@ -10,6 +10,7 @@
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{stats.nat20s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.streak"}}: </span>{{stats.streak.last}} ({{stats.streak.count}})</li>
         </ul>
         <div class="roll-tracker-hist flexrow">
             {{#each stats.percents}}
