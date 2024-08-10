@@ -314,7 +314,7 @@ class RollTracker {
             })
 
             if (checksPassed) {
-                RollTrackerData.createTrackedRoll(chatMessage.user, roll, isBlind)
+                RollTrackerData.createTrackedRoll(chatMessage.author, roll, isBlind)
             }
         });
     }
@@ -466,6 +466,11 @@ class RollStats {
         });
 
         return { modes, count };
+    }
+
+    get percents() {
+        const count = this.count;
+        return this.histogram.map(n => Math.floor(n / count * 100));
     }
 }
 

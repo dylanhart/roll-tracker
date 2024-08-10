@@ -29,41 +29,16 @@
     margin: 0
 }
 
-.roll-tracker-comparison-card-heading {
-    font-size: large;
-    font-weight: bold;
-    margin: 0 0 0.6rem
+.roll-tracker-hist {
+    align-items: flex-end;
+    border: 1px solid var(--color-border-dark-1);
+    gap: 1px;
+    height: 3em;
+    flex-basis: auto;
+    margin-bottom: var(--space-4);
 }
 
-.roll-tracker-comparison-card-stat-heading {
-    margin: 0.2em;
-    font-size: 1.15em;
-}
-
-.roll-tracker-comparison-card-strong {
-    font-weight: bold;
-}
-
-.roll-tracker-comparison-card-goodstat {
-    color: darkgreen;
-}
-
-.roll-tracker-comparison-card-badstat {
-    color:darkred;
-}
-
-.roll-tracker-comparison-card-italics {
-    font-style: italic;
-}
-
-.roll-tracker-comparison-card-ul {
-    margin: 0;
-}
-
-.roll-tracker-comparison-card-li {
-    list-style-type: square;
-}
-
-.roll-tracker-comparison-card-subli {
-    list-style-type: circle;
+.roll-tracker-hist .hist-bar {
+    display: flex;
+    background-color: gray;
 }
