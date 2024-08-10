@@ -1,11 +1,3 @@
-/** TODO:
- * SETTINGS - CAN PLAYERS CLEAR THEIR OWN ROLLS? TREAT FORTUNE/MISFORTUNE AS ONLY THE ROLL TAKEN OR BOTH ROLLED?
- * * HAVE CHECKBOXES FOR WHAT KIND OF ROLLS ARE CONSIDERED - VERY SYSTEM SPECIFIC
- * SIZE OF DICE TO BE TRACKED
- * NEW FEATURES - One click clear everyone's rolls
- *              - Session logs - collect all the rolls for a given log in session and store it. Access past session logs, maybe you can combine them.
- */
-
 // Whenever a chat message is created, check if it contains a roll. If so, parse it to determine
 // whether it should be tracked, according to our module settings
 Hooks.on('createChatMessage', (chatMessage) => {
@@ -546,7 +538,7 @@ class RollTrackerDialog extends FormApplication {
                 break
             }
             case 'print': {
-                const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, this.getData());
+                const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, await this.getData());
                 ChatMessage.create({ content })
                 break
             }
