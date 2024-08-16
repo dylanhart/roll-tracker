@@ -14,7 +14,7 @@
         </ul>
         <div class="roll-tracker-hist flexrow">
             {{#each stats.percents}}
-            <div class="hist-bar" style="height: min(100%, calc(2 * {{this}}%));"></div>
+            <div class="hist-bar" style="height: min(100%, calc(2 * {{this}}%));" title="{{lookup ../stats.histogram @index}} ({{this}}%)"></div>
             {{/each}}
         </div>
         <button type="button" class="roll-tracker-form-button-delete" data-action="clear"><i class="fas fa-times"></i>{{localize "ROLL-TRACKER.form-button.clear"}}</button>
