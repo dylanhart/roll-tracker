@@ -59,6 +59,10 @@ Hooks.once('init', () => {
     RollTracker.initialize()
 })
 
+Handlebars.registerHelper("indexToOrdinal", (value, _options) => {
+    return parseInt(value) + 1;
+});
+
 // Store basic module info
 class RollTracker {
     static ID = 'roll-tracker'
