@@ -1,23 +1,64 @@
-<form>
-    <div class="roll-tracker-form flexcol" data-userId="{{user.id}}">
-        <h1 class="roll-tracker-form-heading">{{user.name}}</h1>
-        <ul class="roll-tracker-form flexcol">
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}}: </span>
-                {{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} ({{stats.mode.count}})
-            </li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{stats.nat20s}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.streak"}}: </span>{{stats.streak.last}} ({{stats.streak.count}})</li>
-        </ul>
-        <div class="roll-tracker-hist flexrow">
-            {{#each stats.percents}}
-            <div class="hist-bar" style="height: min(100%, calc(2 * {{this}}%));" title="{{indexToOrdinal @index}}: {{lookup ../stats.histogram @index}} ({{this}}%)"></div>
-            {{/each}}
-        </div>
-        <button type="button" class="roll-tracker-form-button-delete" data-action="clear"><i class="fas fa-times"></i>{{localize "ROLL-TRACKER.form-button.clear"}}</button>
-        <button type="button" class="roll-tracker-form-button-print" data-action="print"><i class="fas fa-eye"></i>{{localize "ROLL-TRACKER.form-button.print"}}</button>
+<form class="roll-tracker-ledger" data-user-id="{{user.id}}">
+    <div class="ledger-body">
+        <header class="ledger-heading">
+            <div>
+                <p class="ledger-kicker">{{localize "ROLL-TRACKER.form-label.roll-record"}}</p>
+                <h2>{{user.name}}</h2>
+            </div>
+            <div class="ledger-total">
+                <strong>{{summary.count}}</strong>
+                <span>{{localize "ROLL-TRACKER.form-label.d20-rolls"}}</span>
+            </div>
+        </header>
+
+        <dl class="ledger-lead">
+            <div class="ledger-average">
+                <dt>{{localize "ROLL-TRACKER.form-label.average"}}</dt>
+                <dd>{{summary.mean}}</dd>
+            </div>
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.nat1s"}}</dt>
+                <dd>{{summary.nat1s}}</dd>
+            </div>
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.nat20s"}}</dt>
+                <dd>{{summary.nat20s}}</dd>
+            </div>
+        </dl>
+
+        <dl class="ledger-details">
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.median"}}</dt>
+                <dd>{{summary.median}}</dd>
+            </div>
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.mode"}}</dt>
+                <dd class="ledger-mode">{{#if stats.count}}{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}—{{/if}}</dd>
+                {{#if stats.count}}<span class="ledger-note">{{summary.modeCount}} {{localize "ROLL-TRACKER.form-label.each"}}</span>{{/if}}
+            </div>
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.streak"}}</dt>
+                <dd class="ledger-streak">{{#if stats.streak.count}}{{stats.streak.last}} × {{summary.streakCount}}{{else}}—{{/if}}</dd>
+            </div>
+        </dl>
+
+        <section class="ledger-distribution" aria-label="{{localize 'ROLL-TRACKER.form-label.distribution'}}">
+            <div class="ledger-chart-heading">
+                <h3>{{localize "ROLL-TRACKER.form-label.distribution"}}</h3>
+                <span>{{localize "ROLL-TRACKER.form-label.d20-face"}} →</span>
+            </div>
+            <ol class="ledger-histogram" aria-label="{{localize 'ROLL-TRACKER.form-label.distribution'}}">
+                {{#each histogram}}
+                <li data-tooltip="{{face}}: {{count}} ({{percent}}%)" aria-label="{{face}}: {{count}} ({{percent}}%)">
+                    <span class="ledger-bar-track" aria-hidden="true"><span class="ledger-bar" style="height: {{height}}%"></span></span>
+                    <span class="ledger-tick" aria-hidden="true">{{#if showLabel}}{{face}}{{/if}}</span>
+                </li>
+                {{/each}}
+            </ol>
+        </section>
     </div>
+    <footer class="ledger-actions">
+        <button type="button" class="ledger-clear" data-action="clear"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{localize "ROLL-TRACKER.form-button.clear"}}</button>
+        <button type="button" class="ledger-print" data-action="print"><i class="fas fa-comment-alt" aria-hidden="true"></i>{{localize "ROLL-TRACKER.form-button.print"}}</button>
+    </footer>
 </form>

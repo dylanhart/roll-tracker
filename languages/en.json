@@ -15,7 +15,12 @@
       "streak": "Current Streak",
       "instance": "instance",
       "instances": "instances",
-      "each": "each"
+      "each": "each",
+      "roll-record": "Roll record",
+      "d20-rolls": "d20 rolls",
+      "average": "Average roll",
+      "distribution": "Roll distribution",
+      "d20-face": "d20 face"
     },
     "form-button": {
       "clear": "Clear Data",
