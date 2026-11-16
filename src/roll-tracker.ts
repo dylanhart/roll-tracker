@@ -2,7 +2,7 @@ import { renderPlayerButtons } from './player-list';
 import { registerSettings } from './settings';
 import { reportTrackingError, trackMessage } from './tracking';
 
-// This PF2e snapshot uses an unknown[] fallback for these two hook names.
+// PF2e uses an unknown[] fallback for hooks without a specific overload.
 Hooks.on('createChatMessage', (message) => {
     void trackMessage(message as ChatMessage).catch(reportTrackingError);
 });

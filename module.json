@@ -23,7 +23,7 @@
   "id": "roll-tracker",
   "compatibility": {
     "minimum": "13",
-    "verified": "13"
+    "verified": "14"
   },
   "esmodules": ["scripts/roll-tracker.js"]
 }

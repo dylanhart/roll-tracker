@@ -41,21 +41,38 @@ globalThis.ChatMessage = {
     },
 };
 globalThis.ui = { notifications: { error: (...args) => notices.push(args) } };
+let confirmation = true;
+let confirmConfig;
+let applicationId = 0;
+class ApplicationV2 {
+    constructor(options = {}) {
+        this.options = {
+            id: `application-${++applicationId}`,
+            ...this.constructor.DEFAULT_OPTIONS,
+            ...options,
+        };
+    }
+    async render(options) {
+        this.lastRenderOptions = options;
+        dialogs.push(this.user);
+        return this;
+    }
+    async _prepareContext() {
+        return {};
+    }
+}
 globalThis.foundry = {
-    applications: { handlebars: { renderTemplate: async (_path, data) => String(data.stats.count) } },
-    appv1: {
+    documents: { ChatMessage: globalThis.ChatMessage },
+    applications: {
+        handlebars: { renderTemplate: async (_path, data) => String(data.stats.count) },
         api: {
-            Dialog: { confirm: async () => true },
-            FormApplication: class {
-                constructor(object) {
-                    this.object = object;
-                }
-                render() {
-                    dialogs.push(this.object);
-                }
-                getData() {
-                    return { object: this.object };
-                }
+            ApplicationV2,
+            HandlebarsApplicationMixin: (Base) => class extends Base {},
+            DialogV2: {
+                confirm: async (config) => {
+                    confirmConfig = config;
+                    return confirmation;
+                },
             },
         },
     },
@@ -88,7 +105,7 @@ function playerList() {
     );
     return { rows, querySelector: (selector) => rows.get(selector.match(/"(.*?)"/)[1]) };
 }
-test('v13 player buttons respect permissions, avoid duplicates, and open the right user', () => {
+test('v14 player buttons respect permissions, avoid duplicates, and open the right user', async () => {
     settings.set('players_see_players', true);
     const element = playerList();
     const render = hooks.get('renderPlayers');
@@ -99,6 +116,7 @@ test('v13 player buttons respect permissions, avoid duplicates, and open the rig
     render({}, element);
     assert.equal(element.rows.get(user.id).button, button);
     button.click();
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(dialogs.pop(), user);
     settings.set('players_see_players', false);
     const hidden = playerList();
@@ -109,6 +127,7 @@ test('v13 player buttons respect permissions, avoid duplicates, and open the rig
     const gm = playerList();
     render({}, gm);
     gm.rows.get(other.id).button.click();
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(dialogs.pop(), other);
     settings.set('gm_see_players', false);
     const self = playerList();
@@ -160,11 +179,14 @@ test('tracking does not wait for Dice So Nice, even when animation never complet
 });
 test('dialog print and clear buttons use persisted statistics', async () => {
     const dialog = new RollTrackerDialog(user);
-    await dialog._handleButtonClick({ currentTarget: { dataset: { action: 'print' } } });
+    await dialog.options.actions.print.call(dialog);
     assert.equal(printed.content, '1');
-    await dialog._handleButtonClick({ currentTarget: { dataset: { action: 'clear' } } });
+    await dialog.options.actions.clear.call(dialog);
+    assert.equal(confirmConfig.rejectClose, false);
+    assert.equal(confirmConfig.modal, true);
+    assert.ok(confirmConfig.window.title);
     assert.equal(saved, undefined);
-    assert.equal((await dialog.getData()).stats.count, 0);
+    assert.equal((await dialog._prepareContext({})).stats.count, 0);
 });
 test('failed tracking writes surface an error to the user', async () => {
     const originalSet = user.setFlag;
@@ -187,5 +209,27 @@ test('failed tracking writes surface an error to the user', async () => {
     } finally {
         user.setFlag = originalSet;
         console.error = originalError;
+    }
+});
+
+test('v14 dialog uses Handlebars parts and native application actions with unique window IDs', async () => {
+    const dialog = new RollTrackerDialog(user);
+    assert.ok(dialog instanceof ApplicationV2);
+    assert.notEqual(dialog.options.id, new RollTrackerDialog(user).options.id);
+    assert.notEqual(dialog.options.id, new RollTrackerDialog(other).options.id);
+    assert.equal(dialog.options.position.width, 440);
+    assert.equal(RollTrackerDialog.PARTS.ledger.template, 'modules/roll-tracker/templates/roll-tracker.hbs');
+    const context = await dialog._prepareContext({});
+    assert.equal(context.histogram.length, 20);
+    assert.ok(context.histogram.every((bar) => Number.isFinite(bar.height)));
+});
+test('dismissing the v14 confirmation preserves user statistics', async () => {
+    const previous = saved;
+    confirmation = null;
+    try {
+        await new RollTrackerDialog(user).clearStats();
+        assert.equal(saved, previous);
+    } finally {
+        confirmation = true;
     }
 });

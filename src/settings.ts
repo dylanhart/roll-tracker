@@ -38,7 +38,7 @@ export function registerSettings(): void {
     // Are streaks completely disabled, are they shown only to GMs, or are they shown to everyone
     game.settings.register(ID, SETTINGS.STREAK_BEHAVIOUR, {
         name: `ROLL-TRACKER.settings.${SETTINGS.STREAK_BEHAVIOUR}.Name`,
-        default: true,
+        default: 'disable',
         type: String,
         scope: 'world',
         config: true,
@@ -54,7 +54,7 @@ export function registerSettings(): void {
     // a streak?
     game.settings.register(ID, SETTINGS.STREAK_THRESHOLD, {
         name: `ROLL-TRACKER.settings.${SETTINGS.STREAK_THRESHOLD}.Name`,
-        default: true,
+        default: 3,
         type: Number,
         range: {
             min: 2,

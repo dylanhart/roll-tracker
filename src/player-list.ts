@@ -1,5 +1,6 @@
 import { ID, SETTINGS } from './config';
 import { RollTrackerDialog } from './dialog';
+import { reportTrackingError } from './tracking';
 
 export function renderPlayerButtons(element: HTMLElement): void {
     const insertRollTrackerButton = (user: User) => {
@@ -11,7 +12,9 @@ export function renderPlayerButtons(element: HTMLElement): void {
         button.title = game.i18n.localize('ROLL-TRACKER.button-title');
         button.className = 'roll-tracker-item-button flex0';
         button.innerHTML = '<i class="fas fa-dice-d20"></i>';
-        button.addEventListener('click', () => new RollTrackerDialog(user).render(true));
+        button.addEventListener('click', () => {
+            void new RollTrackerDialog(user).render({ force: true }).catch(reportTrackingError);
+        });
         row.append(button);
     };
 
