@@ -1,3 +1,5 @@
+import type { TrackerUser, TrackerRoll, TrackerMessage, StatsFlag, StreakFlag, JQueryElement, ClickEvent } from './foundry';
+
 // Whenever a chat message is created, check if it contains a roll. If so, parse it to determine
 // whether it should be tracked, according to our module settings
 Hooks.on('createChatMessage', (chatMessage) => {
@@ -8,7 +10,7 @@ Hooks.on('createChatMessage', (chatMessage) => {
 
 // This adds our icon to the player list
 Hooks.on('renderPlayers', (_app, element) => {
-    const insertRollTrackerButton = (user) => {
+    const insertRollTrackerButton = (user: TrackerUser) => {
         const row = element.querySelector(`[data-user-id="${user.id}"]`);
         if (!row || row.querySelector('.roll-tracker-item-button')) return;
 
@@ -34,11 +36,12 @@ Hooks.once('init', () => {
 })
 
 Handlebars.registerHelper("indexToOrdinal", (value, _options) => {
-    return parseInt(value) + 1;
+    return parseInt(String(value)) + 1;
 });
 
 // Store basic module info
 class RollTracker {
+    static SYSTEM: string;
     static ID = 'roll-tracker'
 
     static FLAGS = {
@@ -167,7 +170,7 @@ class RollTracker {
     // This function creates an object containing all the requirements that need to be met for the roll
     // to be counted, taking into account all the currently active settings. If all of the conditions are
     // met, the roll is recorded.
-    static async parseMessage(chatMessage, system) {
+    static async parseMessage(chatMessage: TrackerMessage, system: string) {
         // Wait for 3d dice
         if (chatMessage.isContentVisible) {
             await RollTrackerHelper.waitFor3DDiceMessage(chatMessage.id);
@@ -177,8 +180,8 @@ class RollTracker {
 
         chatMessage.rolls.forEach(roll => {
             const isBlind = chatMessage.blind
-            const rollRequirements = {
-                blindCheck: (!isBlind || countHidden || roll.roller.isGM),
+            const rollRequirements: Record<string, boolean> = {
+                blindCheck: (!isBlind || Boolean(countHidden) || chatMessage.author.isGM),
             }
             switch (system) {
                 case 'dnd5e':
@@ -216,8 +219,8 @@ class RollTrackerHelper {
     // If Dice So Nice is enabled, this will help us wait until after the animation is shown
     // to send chat messages such as the Streak chat message, so we don't ruin the surprise of
     // the roll
-    static async waitFor3DDiceMessage(targetMessageId) {
-        function buildHook(resolve) {
+    static async waitFor3DDiceMessage(targetMessageId: string) {
+        function buildHook(resolve: (value: boolean) => void) {
             Hooks.once('diceSoNiceRollComplete', (messageId) => {
                 if (targetMessageId === messageId)
                     resolve(true);
@@ -225,7 +228,7 @@ class RollTrackerHelper {
                     buildHook(resolve)
             });
         }
-        return new Promise((resolve, reject) => {
+        return new Promise<boolean>((resolve) => {
             if (game.dice3d) {
                 buildHook(resolve);
             } else {
@@ -236,12 +239,12 @@ class RollTrackerHelper {
 }
 
 class Streak {
-    constructor(last, count) {
+    constructor(public last: number | null, public count: number) {
         this.last = last;
         this.count = count;
     }
 
-    static fromFlagData(flagData) {
+    static fromFlagData(flagData: StreakFlag) {
         return new Streak(flagData.last, flagData.count);
     }
 
@@ -252,7 +255,7 @@ class Streak {
         };
     }
 
-    update(number) {
+    update(number: number) {
         if (number == this.last) {
             this.count += 1;
         } else {
@@ -267,13 +270,15 @@ class Streak {
     }
 }
 
-class RollStats {
+export class RollStats {
+    histogram: number[];
+    streak = new Streak(null, 0);
     constructor() {
         this.histogram = new Array(20);
         this.clear();
     }
 
-    static fromFlagData(flagData) {
+    static fromFlagData(flagData: StatsFlag) {
         let rollStats = new RollStats();
         rollStats.histogram = [...flagData.histogram];
         rollStats.streak = Streak.fromFlagData(flagData.streak);
@@ -287,7 +292,7 @@ class RollStats {
         };
     }
 
-    update(number) {
+    update(number: number) {
         if (number < 1 || number > 20) {
             throw new Error("Dice value out of range: " + number);
         }
@@ -345,7 +350,7 @@ class RollStats {
             };
         }
 
-        let modes = [];
+        let modes: number[] = [];
         let count = 0;
         this.histogram.forEach((curr, idx) => {
             if (curr > count) {
@@ -367,7 +372,7 @@ class RollStats {
 
 class RollTrackerData {
     // Our main data workhorse class
-    static readUserStats(user) {
+    static readUserStats(user: TrackerUser) {
         const flagData = user.getFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS);
         if (flagData == null) {
             return new RollStats();
@@ -375,16 +380,16 @@ class RollTrackerData {
         return RollStats.fromFlagData(flagData);
     }
 
-    static async writeUserStats(user, rollStats) {
+    static async writeUserStats(user: TrackerUser, rollStats: RollStats) {
         const flagData = rollStats.toFlagData();
         return await user.setFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS, flagData);
     }
 
-    static async clearTrackedRolls(user) {
+    static async clearTrackedRolls(user: TrackerUser) {
         return await user.unsetFlag(RollTracker.ID, RollTracker.FLAGS.ROLL_STATS);
     }
 
-    static async createTrackedRoll(user, roll, isBlind) {
+    static async createTrackedRoll(user: TrackerUser, roll: TrackerRoll, _isBlind: boolean) {
         // We are running client-side, so we should only update our own roll data.
         if (game.userId !== user.id) {
             return;
@@ -404,8 +409,8 @@ class RollTrackerData {
     }
 }
 
-class RollTrackerDialog extends FormApplication {
-    constructor(user, options = {}) {
+class RollTrackerDialog extends foundry.appv1.api.FormApplication {
+    constructor(user: TrackerUser, options = {}) {
         // the first argument is the object, the second are the options
         super(user, options)
     }
@@ -422,27 +427,27 @@ class RollTrackerDialog extends FormApplication {
         return mergedOptions
     }
 
-    async getData(options) {
+    async getData() {
         return {
             user: this.object,
             stats: RollTrackerData.readUserStats(this.object),
         };
     }
 
-    activateListeners(html) {
+    activateListeners(html: JQueryElement) {
         super.activateListeners(html);
 
         const clickHandler = this._handleButtonClick.bind(this);
         html.on("click", "[data-action]", clickHandler);
     }
 
-    async _handleButtonClick(event) {
+    async _handleButtonClick(event: ClickEvent) {
         const clickedElement = $(event.currentTarget)
         const action = clickedElement.data().action
         const user = this.object;
         switch (action) {
             case 'clear': {
-                const confirmed = await Dialog.confirm({
+                const confirmed = await foundry.appv1.api.Dialog.confirm({
                     title: game.i18n.localize("ROLL-TRACKER.confirms.clear_rolls.title"),
                     content: game.i18n.localize("ROLL-TRACKER.confirms.clear_rolls.content"),
                 })
@@ -453,7 +458,7 @@ class RollTrackerDialog extends FormApplication {
                 break
             }
             case 'print': {
-                const content = await renderTemplate(RollTracker.TEMPLATES.CHATMSG, await this.getData());
+                const content = await foundry.applications.handlebars.renderTemplate(RollTracker.TEMPLATES.CHATMSG, await this.getData());
                 ChatMessage.create({ content })
                 break
             }
