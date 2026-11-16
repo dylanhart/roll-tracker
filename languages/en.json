@@ -1,5 +1,8 @@
 {
     "ROLL-TRACKER": {
+        "errors": {
+            "save": "Roll Tracker could not save statistics. See the console for details."
+        },
         "button-title": "Check Rolls",
         "form-label": {
             "mean": "Mean",

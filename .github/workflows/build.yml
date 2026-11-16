@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -38,4 +40,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" release/module.json release/roll-tracker.zip --verify-tag --generate-notes --latest
+        run: gh release create "$TAG" release/module.json release/roll-tracker.zip --verify-tag --generate-notes

@@ -9,9 +9,23 @@
     ],
     "strict": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@common/*": [
+        "./vendor/pf2e/types/foundry/common/*"
+      ],
+      "@client/*": [
+        "./vendor/pf2e/types/foundry/client/*"
+      ]
+    },
+    "types": [
+      "jquery",
+      "node"
+    ]
   },
   "include": [
-    "src"
+    "src",
+    "vendor/pf2e/types/foundry/global-external.d.mts",
+    "vite.config.ts"
   ]
 }

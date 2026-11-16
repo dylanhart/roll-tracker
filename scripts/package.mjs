@@ -3,12 +3,18 @@ import { join, relative } from 'node:path';
 import { zipSync } from 'fflate';
 
 const manifest = JSON.parse(readFileSync('dist/module.json', 'utf8'));
-const tag = `v${manifest.version}`;
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+if (manifest.version !== version) throw new Error('Built manifest version differs from package.json');
+const tag = `v${version}`;
+if (process.env.GITHUB_REF_TYPE === 'tag' && !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error('Only stable versions may be published by this workflow');
+}
 if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== tag) {
     throw new Error(`Release tag must match module version: ${tag}`);
 }
 const expectedDownload = `https://github.com/dylanhart/roll-tracker/releases/download/${tag}/roll-tracker.zip`;
-if (manifest.download !== expectedDownload) throw new Error('Built manifest download URL does not match the version');
+if (manifest.download !== expectedDownload)
+    throw new Error('Built manifest download URL does not match the version');
 const files = {};
 function collect(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
@@ -18,7 +24,11 @@ function collect(directory) {
     }
 }
 collect('dist');
-for (const path of [...manifest.esmodules, ...manifest.styles, ...manifest.languages.map(language => language.path)]) {
+for (const path of [
+    ...manifest.esmodules,
+    ...manifest.styles,
+    ...manifest.languages.map((language) => language.path),
+]) {
     if (!files[path]) throw new Error(`Missing manifest asset: ${path}`);
 }
 mkdirSync('release', { recursive: true });
