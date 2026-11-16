@@ -18,32 +18,6 @@
     text-shadow: 0 0 5px red;
 }
 
-.roll-tracker-form-heading {
-    font-size: large;
-    font-weight: bold;
-    margin: 0 0 0.4rem;
-}
-
-.roll-tracker-form-subheading {
-    align-self: center;
-    font-size: large;
-    margin: 0;
-}
-
-.roll-tracker-hist {
-    align-items: flex-end;
-    border: 1px solid var(--color-border-dark-1);
-    gap: 1px;
-    height: 3em;
-    flex-basis: auto;
-    margin-bottom: var(--space-4);
-}
-
-.roll-tracker-hist .hist-bar {
-    display: flex;
-    background-color: gray;
-}
-
 /* Content only: Foundry provides the title bar, frame, and resize controls. */
 .roll-tracker-app .window-content {
     padding: 0;
@@ -420,4 +394,143 @@
     padding: 0 5px;
     height: 26px;
     font-size: 11px;
+}
+
+/* Keep the card self-contained outside PF2e while using its chat-card structure. */
+.roll-tracker-chat.roll-tracker-ledger {
+    gap: 0;
+    border: 1px solid var(--ledger-line);
+    border-radius: 3px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 0;
+    margin: 0;
+    padding: 7px 10px;
+    border: 0;
+    background: var(--ledger-primary);
+    color: var(--ledger-gold);
+}
+
+.roll-tracker-chat.roll-tracker-ledger .card-header h3 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    font-family: var(--ledger-font-heading);
+    font-size: 23px;
+    font-weight: 700;
+    line-height: 1;
+    overflow-wrap: anywhere;
+}
+
+.roll-tracker-chat .roll-tracker-chat-die {
+    flex: 0 0 auto;
+    padding: 2px 5px;
+    border: 1px solid #e9d7a170;
+    border-radius: 2px;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .card-content {
+    margin: 0;
+    padding: 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-lead {
+    gap: 8px;
+    margin: 0 0 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-lead dt {
+    font-size: 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-lead dd {
+    font-size: 22px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-average dd {
+    font-size: 26px;
+}
+
+.roll-tracker-chat.ledger-large-die .ledger-average dd {
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding-top: 8px;
+}
+
+.roll-tracker-chat:not(.ledger-large-die) .ledger-details > div:first-child {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.roll-tracker-chat:not(.ledger-large-die) .ledger-details > div:first-child dd {
+    margin: 0;
+    font-size: 15px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-details dt {
+    font-size: 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-die {
+    height: 26px;
+    min-width: 25px;
+    padding: 0 5px;
+    font-size: 11px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-distribution {
+    margin-top: 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-chart-heading {
+    gap: 6px;
+    padding: 3px 5px;
+    font-size: 10px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-chart-heading h3 {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-histogram {
+    gap: 2px;
+    height: 62px;
+    margin-top: 6px;
+}
+
+.roll-tracker-chat.roll-tracker-ledger .ledger-tick {
+    font-size: 9px;
+    align-self: center;
+    width: max-content;
+}
+
+.roll-tracker-chat .ledger-histogram li:first-child .ledger-tick {
+    align-self: flex-start;
+}
+
+.roll-tracker-chat .ledger-histogram li:last-child .ledger-tick {
+    align-self: flex-end;
+}
+
+.roll-tracker-chat.ledger-large-die .ledger-lead {
+    grid-template-columns: 1.5fr 1fr 1fr;
 }
