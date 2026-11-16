@@ -19,7 +19,12 @@
       "d20-rolls": "d20 rolls",
       "average": "Average roll",
       "distribution": "Roll distribution",
-      "d20-face": "d20 face"
+      "d20-face": "d20 face",
+      "die-type": "Die type",
+      "nat-max": "Natural {faces}s",
+      "bin-size": "{size} per bin",
+      "lowest-five": "Lowest 5",
+      "highest-five": "Highest 5"
     },
     "form-button": {
       "clear": "Clear Data",
@@ -51,21 +56,21 @@
       },
       "dnd5e": {
         "restrict_counted_rolls": {
-          "Name": "Don't Count Unlinked Rolls",
-          "Hint": "If enabled, the tracker will not count any rolls that are not explicitly linked to an actor. Ex: typing /r 1d20 in the chat will not be counted, but an attack or saving throw will be."
+          "Name": "Don't Count Unlinked d20 Rolls",
+          "Hint": "Only track d20 rolls linked to an actor, such as attacks and saving throws. Manual /r 1d20 rolls are excluded. d10000 rolls are always eligible."
         }
       },
       "pf2e": {
         "restrict_counted_rolls": {
-          "Name": "Don't Count Unlinked Rolls",
-          "Hint": "If enabled, the tracker will not count any rolls that are not explicitly linked to an actor. Ex: typing /r 1d20 in the chat will not be counted, but an attack or saving throw will be."
+          "Name": "Don't Count Unlinked d20 Rolls",
+          "Hint": "Only track d20 rolls linked to an actor, such as attacks and saving throws. Manual /r 1d20 rolls are excluded. d10000 rolls are always eligible."
         }
       }
     },
     "confirms": {
       "clear_rolls": {
         "title": "Clear Rolls?",
-        "content": "Are you sure you want to clear your rolls? This cannot be undone."
+        "content": "Clear all tracked {die} rolls for this user? This cannot be undone."
       }
     },
     "summary": {

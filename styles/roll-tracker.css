@@ -50,6 +50,7 @@
 }
 
 .roll-tracker-ledger {
+    container-type: inline-size;
     color-scheme: only light;
     --ledger-paper: #f8f4f1;
     --ledger-ink: #1c1c1c;
@@ -171,7 +172,8 @@
     display: inline-grid;
     place-items: center;
     flex: 0 0 auto;
-    width: 28px;
+    min-width: 28px;
+    padding: 0 6px;
     height: 30px;
     background: var(--ledger-primary);
     color: var(--ledger-gold);
@@ -348,4 +350,80 @@
     .roll-tracker-ledger .ledger-actions button {
         transition: none;
     }
+}
+
+.roll-tracker-ledger .ledger-die-types {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 4px;
+}
+
+.roll-tracker-ledger .ledger-die-types button {
+    width: auto;
+    min-height: 28px;
+    height: auto;
+    margin: 0;
+    padding: 4px 7px;
+    border: 1px solid var(--ledger-line);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--ledger-muted);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.roll-tracker-ledger .ledger-die-types button[aria-pressed="true"] {
+    border-color: var(--ledger-primary);
+    background: var(--ledger-primary);
+    color: white;
+}
+
+.roll-tracker-ledger .ledger-die-types button:not([aria-pressed="true"]):hover {
+    background: #5e000010;
+    color: var(--ledger-primary);
+}
+
+.roll-tracker-ledger .ledger-die-types button:focus-visible {
+    outline: 2px solid var(--ledger-secondary);
+    outline-offset: 2px;
+}
+
+.roll-tracker-ledger.ledger-large-die .ledger-average dd {
+    font-size: 26px;
+}
+
+@container (max-width: 360px) {
+    .roll-tracker-ledger .ledger-heading {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .roll-tracker-ledger.ledger-large-die .ledger-average dd {
+        font-size: 22px;
+    }
+}
+
+.roll-tracker-ledger.ledger-large-die .ledger-details {
+    grid-template-columns: 1fr 1.5fr 1.5fr;
+}
+
+.roll-tracker-ledger .ledger-details .ledger-extremes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+}
+
+.roll-tracker-ledger.ledger-large-die .ledger-die {
+    padding: 0 5px;
+    height: 26px;
+    font-size: 11px;
+}
+
+.roll-tracker-ledger.ledger-large-die .ledger-details > div:first-child dd {
+    font-size: 18px;
+    white-space: nowrap;
+    overflow-wrap: normal;
 }

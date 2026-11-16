@@ -1,20 +1,25 @@
 <form>
     <div class="roll-tracker-form flexcol" data-userId="{{user.id}}">
-        <h1 class="roll-tracker-form-heading">{{user.name}}</h1>
+        <h1 class="roll-tracker-form-heading">{{user.name}} · {{dieLabel}}</h1>
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
+            {{#if isLargeDie}}
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.lowest-five"}}: </span>{{#each summary.lowestValues}}{{this}}{{#unless @last}}, {{/unless}}{{else}}—{{/each}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.highest-five"}}: </span>{{#each summary.highestValues}}{{this}}{{#unless @last}}, {{/unless}}{{else}}—{{/each}}</li>
+            {{else}}
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}}: </span>
                 {{#if stats.count}}{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} ({{summary.modeText}}){{else}}{{summary.modeText}}{{/if}}
             </li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{stats.nat20s}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.streak"}}: </span>{{summary.streakText}}</li>
+            {{/if}}
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
+            <li><span class="roll-tracker-form stat">{{maximumLabel}}: </span>{{summary.natMaxs}}</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
         </ul>
         <div class="roll-tracker-hist flexrow">
-            {{#each stats.percents}}
-            <div class="hist-bar" style="height: min(100%, calc(2 * {{this}}%));" title="{{indexToOrdinal @index}}: {{lookup ../stats.histogram @index}} ({{this}}%)"></div>
+            {{#each histogram}}
+            <div class="hist-bar" style="height: {{height}}%;" title="{{label}}: {{count}} ({{percent}}%)"></div>
             {{/each}}
         </div>
     </div>

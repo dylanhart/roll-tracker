@@ -1,8 +1,11 @@
-<section class="roll-tracker-ledger" data-user-id="{{user.id}}">
+<section class="roll-tracker-ledger {{#if isLargeDie}}ledger-large-die{{/if}}" data-user-id="{{user.id}}">
     <div class="ledger-body">
         <header class="ledger-heading">
             <div>
                 <h2>{{user.name}}</h2>
+            </div>
+            <div class="ledger-die-types" role="group" aria-label="{{localize 'ROLL-TRACKER.form-label.die-type'}}">
+                {{#each dieTypes}}<button type="button" data-action="selectDie" data-faces="{{faces}}" aria-pressed="{{selected}}">{{label}}</button>{{/each}}
             </div>
         </header>
 
@@ -16,8 +19,8 @@
                 <dd>{{summary.nat1s}}</dd>
             </div>
             <div>
-                <dt>{{localize "ROLL-TRACKER.form-label.nat20s"}}</dt>
-                <dd>{{summary.nat20s}}</dd>
+                <dt>{{maximumLabel}}</dt>
+                <dd>{{summary.natMaxs}}</dd>
             </div>
         </dl>
 
@@ -26,11 +29,25 @@
                 <dt>{{localize "ROLL-TRACKER.form-label.median"}}</dt>
                 <dd>{{summary.median}}</dd>
             </div>
+            {{#if isLargeDie}}
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.lowest-five"}}</dt>
+                <dd class="ledger-extremes">
+                    {{#each summary.lowestValues}}<span class="ledger-die">{{this}}</span>{{else}}—{{/each}}
+                </dd>
+            </div>
+            <div>
+                <dt>{{localize "ROLL-TRACKER.form-label.highest-five"}}</dt>
+                <dd class="ledger-extremes">
+                    {{#each summary.highestValues}}<span class="ledger-die">{{this}}</span>{{else}}—{{/each}}
+                </dd>
+            </div>
+            {{else}}
             <div>
                 <dt>{{localize "ROLL-TRACKER.form-label.mode"}}</dt>
                 <dd class="ledger-mode" role="img" aria-label="{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}: {{summary.modeText}}" data-tooltip="{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}: {{summary.modeText}}">
                     {{#if stats.count}}
-                    <span class="ledger-dice-group" aria-hidden="true">{{#each stats.mode.modes}}<span class="ledger-die">{{this}}</span>{{/each}}</span>
+                    <span class="ledger-dice-group" aria-hidden="true">{{#each summary.modeValues}}<span class="ledger-die">{{this}}</span>{{/each}}</span>
                     <span class="ledger-repeat" aria-hidden="true">×{{summary.modeCount}}</span>
                     {{else}}<span aria-hidden="true">—</span>{{/if}}
                 </dd>
@@ -43,18 +60,19 @@
                     {{else}}<span aria-hidden="true">—</span>{{/if}}
                 </dd>
             </div>
+            {{/if}}
         </dl>
 
         <section class="ledger-distribution" aria-label="{{localize 'ROLL-TRACKER.form-label.distribution'}}">
             <div class="ledger-chart-heading">
                 <h3>{{localize "ROLL-TRACKER.form-label.distribution"}}</h3>
-                <span>{{localize "ROLL-TRACKER.form-label.d20-face"}} →</span>
+                <span>{{histogramUnit}} →</span>
             </div>
             <ol class="ledger-histogram" aria-label="{{localize 'ROLL-TRACKER.form-label.distribution'}}">
                 {{#each histogram}}
-                <li data-tooltip="{{face}}: {{count}} ({{percent}}%)" aria-label="{{face}}: {{count}} ({{percent}}%)">
+                <li data-tooltip="{{label}}: {{count}} ({{percent}}%)" aria-label="{{label}}: {{count}} ({{percent}}%)">
                     <span class="ledger-bar-track" aria-hidden="true"><span class="ledger-bar" style="height: {{height}}%"></span></span>
-                    <span class="ledger-tick" aria-hidden="true">{{#if showLabel}}{{face}}{{/if}}</span>
+                    <span class="ledger-tick" aria-hidden="true">{{#if showLabel}}{{tick}}{{/if}}</span>
                 </li>
                 {{/each}}
             </ol>

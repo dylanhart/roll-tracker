@@ -261,3 +261,57 @@ test('streak and mode summaries distinguish die result from repetition count', (
     assert.equal(empty.summary.streakText, 'No rolls yet');
     assert.equal(empty.summary.totalText, '0 total rolls');
 });
+
+test('d10000 ledger bins all faces once and reports exact lowest and highest rolls', () => {
+    const large = new RollStats(10000);
+    for (const value of [1, 500, 501, 10000]) large.update(value);
+    const context = getLedgerContext(
+        { getFlag: (_scope, key) => (key === 'roll-stats-d10000' ? large.toSparseFlagData() : undefined) },
+        10000,
+    );
+    assert.equal(context.isLargeDie, true);
+    assert.equal(context.histogram.length, 20);
+    assert.equal(context.histogram[0].label, '1–500');
+    assert.equal(context.histogram[0].count, 2);
+    assert.equal(context.histogram[1].count, 1);
+    assert.equal(context.histogram[19].count, 1);
+    assert.equal(
+        context.histogram.reduce((sum, bin) => sum + bin.count, 0),
+        4,
+    );
+    assert.deepEqual(context.summary.lowestValues, ['1', '500', '501', '10,000']);
+    assert.deepEqual(context.summary.highestValues, ['10,000', '501', '500', '1']);
+});
+test('die picker, printing, and clearing operate on the selected die only', async () => {
+    const d20 = new RollStats();
+    d20.update(20);
+    const d10000 = new RollStats(10000);
+    d10000.update(10000);
+    d10000.update(1);
+    const flags = new Map([
+        ['roll-stats', d20.toFlagData()],
+        ['roll-stats-d10000', d10000.toSparseFlagData()],
+    ]);
+    const selectedUser = {
+        id: 'die-picker',
+        getFlag: (_scope, key) => flags.get(key),
+        unsetFlag: async (_scope, key) => {
+            flags.delete(key);
+            return selectedUser;
+        },
+    };
+    const dialog = new RollTrackerDialog(selectedUser);
+    await dialog.options.actions.selectDie.call(dialog, {}, { dataset: { faces: '10000' } });
+    assert.equal(dialog.faces, 10000);
+    assert.equal((await dialog._prepareContext({})).stats.count, 2);
+    await dialog.printStats();
+    assert.equal(printed.content, '2');
+    await dialog.clearStats();
+    assert.ok(confirmConfig.content.includes('d10000'));
+    assert.equal(flags.has('roll-stats-d10000'), false);
+    assert.deepEqual(flags.get('roll-stats'), d20.toFlagData());
+    await dialog.options.actions.selectDie.call(dialog, {}, { dataset: { faces: '6' } });
+    assert.equal(dialog.faces, 10000);
+    await dialog.selectDie(20);
+    assert.equal((await dialog._prepareContext({})).stats.count, 1);
+});

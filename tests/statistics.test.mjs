@@ -37,3 +37,23 @@ test('empty and cleared statistics have finite zero-height histogram bars', () =
     stats.clear();
     assert.deepEqual(stats.percents, Array(20).fill(0));
 });
+
+test('d10000 statistics compute exact values and extrema with repeated rolls', () => {
+    const stats = new RollStats(10000);
+    for (const value of [10000, 1, 1, 2, 9999, 5000, 5000, 5000]) stats.update(value);
+    assert.equal(stats.count, 8);
+    assert.equal(stats.sum, 35003);
+    assert.equal(stats.mean, 4375.375);
+    assert.equal(stats.median, 5000);
+    assert.deepEqual(stats.lowest, [1, 1, 2, 5000, 5000]);
+    assert.deepEqual(stats.highest, [10000, 9999, 5000, 5000, 5000]);
+    assert.deepEqual(stats.streak.toFlagData(), { last: null, count: 0 });
+    const flag = stats.toSparseFlagData();
+    assert.deepEqual(flag, { counts: { 1: 2, 2: 1, 5000: 3, 9999: 1, 10000: 1 } });
+    assert.deepEqual(RollStats.fromSparseFlagData(flag).toSparseFlagData(), flag);
+    for (const invalid of [0, 10001, 1.5, NaN, Infinity]) assert.throws(() => stats.update(invalid));
+    stats.clear();
+    assert.equal(stats.count, 0);
+    assert.deepEqual(stats.lowest, []);
+    assert.deepEqual(stats.highest, []);
+});

@@ -1,6 +1,6 @@
 {
   "title": "Roll Tracker",
-  "description": "A simple module which tracks the d20 rolls made and logs them by each user.",
+  "description": "Tracks d20 and d10000 rolls separately for each user.",
   "authors": [
     {
       "name": "drexl93"

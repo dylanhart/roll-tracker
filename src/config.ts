@@ -2,6 +2,7 @@ export const ID = 'roll-tracker';
 
 export const FLAGS = {
     ROLL_STATS: 'roll-stats',
+    D10000_STATS: 'roll-stats-d10000',
 };
 
 export const TEMPLATES = {
