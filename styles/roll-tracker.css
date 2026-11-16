@@ -97,11 +97,6 @@
     overflow-wrap: anywhere;
 }
 
-.roll-tracker-ledger .ledger-note {
-    color: var(--ledger-muted);
-    font-size: 11px;
-}
-
 .roll-tracker-ledger dl {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -139,7 +134,7 @@
 }
 
 .roll-tracker-ledger .ledger-details {
-    grid-template-columns: 0.65fr 1fr 1.55fr;
+    grid-template-columns: 0.65fr 1.5fr 1fr;
     align-items: start;
     padding-top: 10px;
     border-top: 1px solid var(--ledger-line);
@@ -156,20 +151,39 @@
     line-height: 1.25;
 }
 
-.roll-tracker-ledger .ledger-details .ledger-mode {
+.roll-tracker-ledger .ledger-details .ledger-mode,
+.roll-tracker-ledger .ledger-details .ledger-streak {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-height: 30px;
+}
+
+.roll-tracker-ledger .ledger-dice-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.roll-tracker-ledger .ledger-die {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 28px;
+    height: 30px;
+    background: var(--ledger-primary);
+    color: var(--ledger-gold);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.roll-tracker-ledger .ledger-repeat {
     font-size: 16px;
     font-weight: 500;
-}
-
-.roll-tracker-ledger .ledger-details .ledger-streak {
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.roll-tracker-ledger .ledger-note {
-    display: block;
-    margin-top: 3px;
-    font-size: 12px;
+    white-space: nowrap;
 }
 
 .roll-tracker-ledger .ledger-distribution {
