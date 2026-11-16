@@ -1,6 +1,6 @@
 import { FLAGS, ID } from './config';
 import { type DieFaces, isSupportedDie, SUPPORTED_DICE } from './dice';
-import { RollStats, type SparseStatsFlag, type StatsFlag } from './statistics';
+import { type D10000StatsFlag, RollStats, type SparseStatsFlag, type StatsFlag } from './statistics';
 
 // Reading inside the queue ensures each operation sees the preceding committed write.
 const writes = new Map<string, Promise<void>>();
@@ -22,9 +22,10 @@ function flagKey(faces: DieFaces): string {
 export function readUserStats(user: User, faces: DieFaces = 20): RollStats {
     const flagData = user.getFlag(ID, flagKey(faces));
     if (flagData == null) return new RollStats(faces);
-    return faces === 20
-        ? RollStats.fromFlagData(flagData as StatsFlag)
-        : RollStats.fromSparseFlagData(flagData as SparseStatsFlag, faces);
+    if (faces === 20) return RollStats.fromFlagData(flagData as StatsFlag);
+    return (flagData as D10000StatsFlag).version === 2
+        ? RollStats.fromBoundedFlagData(flagData as D10000StatsFlag)
+        : RollStats.fromSparseFlagData(flagData as SparseStatsFlag);
 }
 
 export function clearTrackedRolls(user: User, faces: DieFaces = 20): Promise<void> {
@@ -56,8 +57,19 @@ export function trackRolls(
             await user.setFlag(
                 ID,
                 flagKey(faces),
-                faces === 20 ? stats.toFlagData() : stats.toSparseFlagData(),
+                faces === 20 ? stats.toFlagData() : stats.toBoundedFlagData(),
             );
         }
+    });
+}
+
+// Each client compacts its own existing data when connecting; the queue also
+// ensures this conversion cannot overwrite a newer local roll update.
+export function compactD10000Stats(user: User): Promise<void> {
+    return enqueue(user, async () => {
+        const flag = user.getFlag(ID, FLAGS.D10000_STATS) as D10000StatsFlag | SparseStatsFlag | undefined;
+        if (flag == null || ('version' in flag && flag.version === 2 && flag.counts === null)) return;
+        const stats = readUserStats(user, 10000);
+        await user.setFlag(ID, FLAGS.D10000_STATS, stats.toBoundedFlagData());
     });
 }

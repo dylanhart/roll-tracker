@@ -266,10 +266,11 @@ test('d10000 ledger bins all faces once and reports exact lowest and highest rol
     const large = new RollStats(10000);
     for (const value of [1, 500, 501, 10000]) large.update(value);
     const context = getLedgerContext(
-        { getFlag: (_scope, key) => (key === 'roll-stats-d10000' ? large.toSparseFlagData() : undefined) },
+        { getFlag: (_scope, key) => (key === 'roll-stats-d10000' ? large.toBoundedFlagData() : undefined) },
         10000,
     );
     assert.equal(context.isLargeDie, true);
+    assert.equal(context.summary.median, undefined);
     assert.equal(context.histogram.length, 20);
     assert.equal(context.histogram[0].label, '1–500');
     assert.equal(context.histogram[0].count, 2);
@@ -290,7 +291,7 @@ test('die picker, printing, and clearing operate on the selected die only', asyn
     d10000.update(1);
     const flags = new Map([
         ['roll-stats', d20.toFlagData()],
-        ['roll-stats-d10000', d10000.toSparseFlagData()],
+        ['roll-stats-d10000', d10000.toBoundedFlagData()],
     ]);
     const selectedUser = {
         id: 'die-picker',

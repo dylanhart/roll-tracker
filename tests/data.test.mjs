@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { clearTrackedRolls, readUserStats, trackRolls } from '../src/data.ts';
+import { clearTrackedRolls, compactD10000Stats, readUserStats, trackRolls } from '../src/data.ts';
 import { trackMessage } from '../src/tracking.ts';
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));
@@ -15,7 +15,7 @@ function storage(id) {
         setFlag: (_scope, key, data) =>
             new Promise((resolve) => {
                 pending.push(() => {
-                    flags.set(key, data);
+                    flags.set(key, { ...flags.get(key), ...data });
                     resolve(user);
                 });
             }),
@@ -141,11 +141,14 @@ const largeRoll = (...values) => ({
     dice: [{ faces: 10000, results: values.map((result) => ({ result })) }],
 });
 
-test('mixed dice messages retain separate d20 and sparse d10000 statistics', async () => {
+test('mixed dice messages retain separate d20 and bounded d10000 statistics', async () => {
     const state = storage('mixed-dice');
     await finishWrites(state, trackRolls(state.user, [roll(20), largeRoll(1, 10000, 10000)]));
     assert.equal(count(state), 1);
-    assert.deepEqual(state.savedLarge, { counts: { 1: 1, 10000: 2 } });
+    assert.equal(state.savedLarge.count, 3);
+    assert.equal(state.savedLarge.sum, 20001);
+    assert.equal(state.savedLarge.counts, null);
+    assert.equal(state.savedLarge.histogram.length, 20);
     const large = readUserStats(state.user, 10000);
     assert.equal(large.count, 3);
     assert.equal(large.nat1s, 1);
@@ -167,7 +170,8 @@ test('d10000 writes and clears preserve legacy d20 data exactly', async () => {
     await finishWrites(state, trackRolls(state.user, [largeRoll(10000)]));
     await clearTrackedRolls(state.user);
     assert.equal(state.saved, undefined);
-    assert.deepEqual(state.savedLarge.counts, { 10000: 1 });
+    assert.equal(state.savedLarge.counts, null);
+    assert.equal(state.savedLarge.histogram[19], 1);
 });
 test('rapid mixed messages serialize both die types without losing results', async () => {
     const state = storage('rapid-mixed');
@@ -193,8 +197,30 @@ test('manual d10000 rolls count under actor-link filtering while unlinked d20s d
     };
     await finishWrites(state, trackMessage(message));
     assert.equal(state.saved, undefined);
-    assert.deepEqual(state.savedLarge.counts, { 5000: 1 });
+    assert.equal(state.savedLarge.counts, null);
+    assert.equal(state.savedLarge.histogram[9], 1);
     await trackMessage({ ...message, blind: true });
     assert.equal(state.pending.length, 0);
     assert.equal(readUserStats(state.user, 10000).count, 1);
+});
+
+test('existing per-result data is compacted and the old map is overwritten during flag merging', async () => {
+    const state = storage('compact-existing');
+    const counts = Object.fromEntries(Array.from({ length: 10000 }, (_, i) => [i + 1, 1]));
+    state.flags.set('roll-stats-d10000', { counts });
+    const d20 = { histogram: Array(20).fill(0), streak: { last: null, count: 0 } };
+    state.flags.set('roll-stats', d20);
+    await finishWrites(state, compactD10000Stats(state.user));
+    assert.equal(state.savedLarge.counts, null);
+    assert.equal(state.savedLarge.version, 2);
+    assert.equal(state.savedLarge.count, 10000);
+    assert.equal(state.savedLarge.histogram.length, 20);
+    assert.ok(state.savedLarge.histogram.every((count) => count === 500));
+    assert.deepEqual(state.savedLarge.lowest, [1, 2, 3, 4, 5]);
+    assert.deepEqual(state.savedLarge.highest, [10000, 9999, 9998, 9997, 9996]);
+    assert.equal(readUserStats(state.user, 10000).mean, 5000.5);
+    assert.ok(JSON.stringify(state.savedLarge).length < 512);
+    assert.deepEqual(state.saved, d20);
+    await compactD10000Stats(state.user);
+    assert.equal(state.pending.length, 0);
 });

@@ -405,7 +405,7 @@
 }
 
 .roll-tracker-ledger.ledger-large-die .ledger-details {
-    grid-template-columns: 1fr 1.5fr 1.5fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .roll-tracker-ledger .ledger-details .ledger-extremes {
@@ -420,10 +420,4 @@
     padding: 0 5px;
     height: 26px;
     font-size: 11px;
-}
-
-.roll-tracker-ledger.ledger-large-die .ledger-details > div:first-child dd {
-    font-size: 18px;
-    white-space: nowrap;
-    overflow-wrap: normal;
 }

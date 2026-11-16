@@ -25,10 +25,12 @@
         </dl>
 
         <dl class="ledger-details">
+            {{#unless isLargeDie}}
             <div>
                 <dt>{{localize "ROLL-TRACKER.form-label.median"}}</dt>
                 <dd>{{summary.median}}</dd>
             </div>
+            {{/unless}}
             {{#if isLargeDie}}
             <div>
                 <dt>{{localize "ROLL-TRACKER.form-label.lowest-five"}}</dt>

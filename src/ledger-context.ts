@@ -8,7 +8,7 @@ export function getLedgerContext(user: User, faces: DieFaces = 20) {
     const bins = Array.from({ length: 20 }, (_, index) => {
         const start = index * binSize + 1;
         const end = (index + 1) * binSize;
-        const count = stats.histogram.slice(start - 1, end).reduce((sum, n) => sum + n, 0);
+        const count = stats.histogram[index];
         return { start, end, count };
     });
     const max = Math.max(...bins.map((bin) => bin.count));
@@ -55,7 +55,7 @@ export function getLedgerContext(user: User, faces: DieFaces = 20) {
             modeText,
             streakText,
             mean: format.format(stats.mean),
-            median: format.format(stats.median),
+            median: faces === 20 ? format.format(stats.median) : undefined,
             nat1s: format.format(stats.nat1s),
             natMaxs: format.format(stats.natMaxs),
             lowestValues: stats.lowest.map((value) => number(value)),

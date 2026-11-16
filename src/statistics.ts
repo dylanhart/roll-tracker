@@ -9,6 +9,19 @@ export interface StatsFlag {
     streak: StreakFlag;
 }
 
+export interface D10000StatsFlag {
+    version: 2;
+    count: number;
+    sum: number;
+    nat1s: number;
+    natMaxs: number;
+    histogram: number[];
+    lowest: number[];
+    highest: number[];
+    // Explicitly overwrite the old map during Foundry's recursive flag merge.
+    counts: null;
+}
+
 export interface SparseStatsFlag {
     counts: Record<string, number>;
 }
@@ -48,8 +61,14 @@ export class Streak {
 export class RollStats {
     histogram: number[];
     streak = new Streak(null, 0);
+    private totalCount = 0;
+    private totalSum = 0;
+    private minimumCount = 0;
+    private maximumCount = 0;
+    private low: number[] = [];
+    private high: number[] = [];
     constructor(public readonly faces: DieFaces = 20) {
-        this.histogram = new Array(faces);
+        this.histogram = new Array(20);
         this.clear();
     }
 
@@ -60,30 +79,75 @@ export class RollStats {
         return rollStats;
     }
 
-    static fromSparseFlagData(flagData: SparseStatsFlag, faces: DieFaces = 10000) {
-        const stats = new RollStats(faces);
+    static fromSparseFlagData(flagData: SparseStatsFlag) {
+        const stats = new RollStats(10000);
         for (const [face, count] of Object.entries(flagData.counts)) {
-            const value = Number(face);
-            if (
-                !Number.isInteger(value) ||
-                value < 1 ||
-                value > faces ||
-                !Number.isSafeInteger(count) ||
-                count < 0
-            ) {
-                throw new Error('Invalid stored dice statistics');
-            }
-            stats.histogram[value - 1] = count;
+            stats.addAggregate(Number(face), count);
         }
         return stats;
     }
 
-    toSparseFlagData(): SparseStatsFlag {
-        const counts: Record<string, number> = {};
-        this.histogram.forEach((count, index) => {
-            if (count > 0) counts[index + 1] = count;
-        });
-        return { counts };
+    static fromBoundedFlagData(flag: D10000StatsFlag) {
+        const stats = new RollStats(10000);
+        const validInteger = (n: number) => Number.isSafeInteger(n) && n >= 0;
+        const validResults = (values: number[]) =>
+            Array.isArray(values) &&
+            values.length <= 5 &&
+            values.every((value) => Number.isInteger(value) && value >= 1 && value <= 10000);
+        if (
+            flag.version !== 2 ||
+            ![flag.count, flag.sum, flag.nat1s, flag.natMaxs].every(validInteger) ||
+            !Array.isArray(flag.histogram) ||
+            flag.histogram.length !== 20 ||
+            !flag.histogram.every(validInteger) ||
+            flag.histogram.reduce((sum, count) => sum + count, 0) !== flag.count ||
+            !validResults(flag.lowest) ||
+            !validResults(flag.highest)
+        ) {
+            throw new Error('Invalid stored d10000 statistics');
+        }
+        stats.histogram = [...flag.histogram];
+        stats.totalCount = flag.count;
+        stats.totalSum = flag.sum;
+        stats.minimumCount = flag.nat1s;
+        stats.maximumCount = flag.natMaxs;
+        stats.low = [...flag.lowest].sort((a, b) => a - b);
+        stats.high = [...flag.highest].sort((a, b) => b - a);
+        return stats;
+    }
+
+    toBoundedFlagData(): D10000StatsFlag {
+        return {
+            version: 2,
+            count: this.count,
+            sum: this.sum,
+            nat1s: this.nat1s,
+            natMaxs: this.natMaxs,
+            histogram: [...this.histogram],
+            lowest: [...this.low],
+            highest: [...this.high],
+            counts: null,
+        };
+    }
+
+    private addAggregate(value: number, count: number): void {
+        if (
+            !Number.isInteger(value) ||
+            value < 1 ||
+            value > 10000 ||
+            !Number.isSafeInteger(count) ||
+            count < 0
+        ) {
+            throw new Error('Invalid d10000 result or count');
+        }
+        this.totalCount += count;
+        this.totalSum += value * count;
+        this.histogram[Math.floor((value - 1) / 500)] += count;
+        if (value === 1) this.minimumCount += count;
+        if (value === 10000) this.maximumCount += count;
+        const candidates = new Array<number>(Math.min(5, count)).fill(value);
+        this.low = [...this.low, ...candidates].sort((a, b) => a - b).slice(0, 5);
+        this.high = [...this.high, ...candidates].sort((a, b) => b - a).slice(0, 5);
     }
 
     toFlagData() {
@@ -98,21 +162,31 @@ export class RollStats {
             throw new Error(`Dice value out of range: ${number}`);
         }
 
-        this.histogram[number - 1] += 1;
-        if (this.faces === 20) this.streak.update(number);
+        if (this.faces === 10000) {
+            this.addAggregate(number, 1);
+        } else {
+            this.histogram[number - 1] += 1;
+            this.streak.update(number);
+        }
     }
 
     clear() {
         this.histogram.fill(0);
         this.streak = new Streak(null, 0);
+        this.totalCount = 0;
+        this.totalSum = 0;
+        this.minimumCount = 0;
+        this.maximumCount = 0;
+        this.low = [];
+        this.high = [];
     }
 
     get count() {
-        return this.histogram.reduce((acc, curr) => acc + curr, 0);
+        return this.faces === 10000 ? this.totalCount : this.histogram.reduce((acc, curr) => acc + curr, 0);
     }
 
     get nat1s() {
-        return this.histogram[0];
+        return this.faces === 10000 ? this.minimumCount : this.histogram[0];
     }
 
     private extremes(descending: boolean): number[] {
@@ -126,15 +200,15 @@ export class RollStats {
     }
 
     get lowest(): number[] {
-        return this.extremes(false);
+        return this.faces === 10000 ? [...this.low] : this.extremes(false);
     }
 
     get highest(): number[] {
-        return this.extremes(true);
+        return this.faces === 10000 ? [...this.high] : this.extremes(true);
     }
 
     get natMaxs() {
-        return this.histogram[this.faces - 1];
+        return this.faces === 10000 ? this.maximumCount : this.histogram[19];
     }
 
     get nat20s() {
@@ -142,7 +216,9 @@ export class RollStats {
     }
 
     get sum() {
-        return this.histogram.reduce((acc, curr, idx) => acc + curr * (idx + 1), 0);
+        return this.faces === 10000
+            ? this.totalSum
+            : this.histogram.reduce((acc, curr, idx) => acc + curr * (idx + 1), 0);
     }
 
     get mean() {
@@ -150,6 +226,7 @@ export class RollStats {
     }
 
     get median() {
+        if (this.faces === 10000) throw new Error('Exact d10000 median is not retained');
         if (this.count === 0) {
             return 0;
         }
@@ -167,7 +244,7 @@ export class RollStats {
     }
 
     get mode() {
-        if (this.count === 0) {
+        if (this.faces === 10000 || this.count === 0) {
             return {
                 modes: [],
                 count: 0,

@@ -3,7 +3,7 @@
         <h1 class="roll-tracker-form-heading">{{user.name}} · {{dieLabel}}</h1>
         <ul class="roll-tracker-form flexcol">
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
+            {{#unless isLargeDie}}<li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{summary.median}}</li>{{/unless}}
             {{#if isLargeDie}}
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.lowest-five"}}: </span>{{#each summary.lowestValues}}{{this}}{{#unless @last}}, {{/unless}}{{else}}—{{/each}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.highest-five"}}: </span>{{#each summary.highestValues}}{{this}}{{#unless @last}}, {{/unless}}{{else}}—{{/each}}</li>
