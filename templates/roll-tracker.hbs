@@ -4,10 +4,6 @@
             <div>
                 <h2>{{user.name}}</h2>
             </div>
-            <div class="ledger-total">
-                <strong>{{summary.count}}</strong>
-                <span>{{localize "ROLL-TRACKER.form-label.d20-rolls"}}</span>
-            </div>
         </header>
 
         <dl class="ledger-lead">
@@ -33,11 +29,11 @@
             <div>
                 <dt>{{localize "ROLL-TRACKER.form-label.mode"}}</dt>
                 <dd class="ledger-mode">{{#if stats.count}}{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}—{{/if}}</dd>
-                {{#if stats.count}}<span class="ledger-note">{{summary.modeCount}} {{localize "ROLL-TRACKER.form-label.each"}}</span>{{/if}}
+                <span class="ledger-note">{{summary.modeText}}</span>
             </div>
             <div>
                 <dt>{{localize "ROLL-TRACKER.form-label.streak"}}</dt>
-                <dd class="ledger-streak">{{#if stats.streak.count}}{{stats.streak.last}} × {{summary.streakCount}}{{else}}—{{/if}}</dd>
+                <dd class="ledger-streak">{{summary.streakText}}</dd>
             </div>
         </dl>
 
@@ -56,8 +52,11 @@
             </ol>
         </section>
     </div>
-    <footer class="ledger-actions">
+    <footer class="ledger-footer">
+        <div class="ledger-actions">
         <button type="button" class="ledger-clear" data-action="clear"><i class="fas fa-rotate-left" aria-hidden="true"></i>{{localize "ROLL-TRACKER.form-button.clear"}}</button>
         <button type="button" class="ledger-print" data-action="print"><i class="fas fa-comment-alt" aria-hidden="true"></i>{{localize "ROLL-TRACKER.form-button.print"}}</button>
+        </div>
+        <p class="ledger-total">{{summary.totalText}}</p>
     </footer>
 </section>

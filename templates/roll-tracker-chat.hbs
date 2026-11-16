@@ -5,12 +5,12 @@
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mean"}}: </span>{{stats.mean}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.median"}}: </span>{{stats.median}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.mode"}}: </span>
-                {{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} ({{stats.mode.count}})
+                {{#if stats.count}}{{#each stats.mode.modes}}{{this}}{{#unless @last}}, {{/unless}}{{/each}} ({{summary.modeText}}){{else}}{{summary.modeText}}{{/if}}
             </li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat1s"}}: </span>{{stats.nat1s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.nat20s"}}: </span>{{stats.nat20s}}</li>
             <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.count"}}: </span>{{stats.count}}</li>
-            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.streak"}}: </span>{{stats.streak.last}} ({{stats.streak.count}})</li>
+            <li><span class="roll-tracker-form stat">{{localize "ROLL-TRACKER.form-label.streak"}}: </span>{{summary.streakText}}</li>
         </ul>
         <div class="roll-tracker-hist flexrow">
             {{#each stats.percents}}

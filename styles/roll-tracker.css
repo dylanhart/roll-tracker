@@ -97,19 +97,6 @@
     overflow-wrap: anywhere;
 }
 
-.roll-tracker-ledger .ledger-total {
-    flex: 0 0 auto;
-    text-align: right;
-}
-
-.roll-tracker-ledger .ledger-total strong {
-    display: block;
-    font-size: 25px;
-    font-weight: 500;
-    line-height: 1.1;
-}
-
-.roll-tracker-ledger .ledger-total span,
 .roll-tracker-ledger .ledger-note {
     color: var(--ledger-muted);
     font-size: 11px;
@@ -152,6 +139,8 @@
 }
 
 .roll-tracker-ledger .ledger-details {
+    grid-template-columns: 0.65fr 1fr 1.55fr;
+    align-items: start;
     padding-top: 10px;
     border-top: 1px solid var(--ledger-line);
 }
@@ -167,14 +156,20 @@
     line-height: 1.25;
 }
 
-.roll-tracker-ledger .ledger-details .ledger-mode,
+.roll-tracker-ledger .ledger-details .ledger-mode {
+    font-size: 16px;
+    font-weight: 500;
+}
+
 .roll-tracker-ledger .ledger-details .ledger-streak {
-    font-size: 15px;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .roll-tracker-ledger .ledger-note {
     display: block;
-    margin-top: 2px;
+    margin-top: 3px;
+    font-size: 12px;
 }
 
 .roll-tracker-ledger .ledger-distribution {
@@ -249,7 +244,18 @@
     justify-content: space-between;
     gap: 14px;
     padding: 10px 16px;
+}
+
+.roll-tracker-ledger .ledger-footer {
     border-top: 1px solid var(--ledger-line);
+}
+
+.roll-tracker-ledger .ledger-total {
+    margin: 0;
+    padding: 0 16px 10px;
+    color: var(--ledger-muted);
+    font-size: 11px;
+    text-align: center;
 }
 
 .roll-tracker-ledger .ledger-actions button {

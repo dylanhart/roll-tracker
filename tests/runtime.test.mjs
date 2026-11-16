@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { getLedgerContext } from '../src/ledger-context.ts';
+import { RollStats } from '../src/statistics.ts';
 
+const translations = JSON.parse(readFileSync(new URL('../languages/en.json', import.meta.url), 'utf8'));
+const localize = (key) => key.split('.').reduce((value, part) => value?.[part], translations) ?? key;
 const hooks = new Map();
 const settings = new Map();
 const dialogs = [];
@@ -30,7 +35,10 @@ globalThis.game = {
     userId: user.id,
     users: [user, other],
     system: { id: 'generic' },
-    i18n: { localize: (key) => key },
+    i18n: {
+        localize,
+        format: (key, data) => localize(key).replace(/\{(\w+)\}/g, (_match, name) => String(data[name])),
+    },
     settings: { get: (_scope, key) => settings.get(key), register() {} },
 };
 const notices = [];
@@ -232,4 +240,24 @@ test('dismissing the v14 confirmation preserves user statistics', async () => {
     } finally {
         confirmation = true;
     }
+});
+
+test('streak and mode summaries distinguish die result from repetition count', () => {
+    const stats = new RollStats();
+    for (const value of [5, 2, 2, 2]) stats.update(value);
+    const context = getLedgerContext({ getFlag: () => stats.toFlagData() });
+    assert.equal(context.summary.streakText, '3 rolls of 2 in a row');
+    assert.equal(context.summary.modeText, '3 rolls');
+    assert.equal(context.summary.totalText, '4 total d20 rolls');
+    stats.clear();
+    stats.update(2);
+    stats.update(3);
+    const tied = getLedgerContext({ getFlag: () => stats.toFlagData() });
+    assert.equal(tied.summary.modeText, '1 roll each');
+    assert.equal(tied.summary.streakText, '1 roll of 3');
+    stats.clear();
+    const empty = getLedgerContext({ getFlag: () => stats.toFlagData() });
+    assert.equal(empty.summary.modeText, 'No rolls yet');
+    assert.equal(empty.summary.streakText, 'No rolls yet');
+    assert.equal(empty.summary.totalText, '0 total d20 rolls');
 });

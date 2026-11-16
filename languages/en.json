@@ -67,6 +67,27 @@
         "title": "Clear Rolls?",
         "content": "Are you sure you want to clear your rolls? This cannot be undone."
       }
+    },
+    "summary": {
+      "empty": "No rolls yet",
+      "total": {
+        "one": "{count} total d20 roll",
+        "many": "{count} total d20 rolls"
+      },
+      "mode": {
+        "single": {
+          "one": "{count} roll",
+          "many": "{count} rolls"
+        },
+        "tied": {
+          "one": "{count} roll each",
+          "many": "{count} rolls each"
+        }
+      },
+      "streak": {
+        "one": "{count} roll of {value}",
+        "many": "{count} rolls of {value} in a row"
+      }
     }
   }
 }
