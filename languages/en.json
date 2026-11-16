@@ -71,8 +71,8 @@
     "summary": {
       "empty": "No rolls yet",
       "total": {
-        "one": "{count} total d20 roll",
-        "many": "{count} total d20 rolls"
+        "one": "{count} total roll",
+        "many": "{count} total rolls"
       },
       "mode": {
         "single": {

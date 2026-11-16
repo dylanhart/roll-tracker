@@ -270,7 +270,7 @@
     padding: 0;
     color: var(--ledger-muted);
     font-size: 11px;
-    text-align: center;
+    text-align: right;
 }
 
 .roll-tracker-ledger .ledger-actions button {

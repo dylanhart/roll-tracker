@@ -248,7 +248,7 @@ test('streak and mode summaries distinguish die result from repetition count', (
     const context = getLedgerContext({ getFlag: () => stats.toFlagData() });
     assert.equal(context.summary.streakText, '3 rolls of 2 in a row');
     assert.equal(context.summary.modeText, '3 rolls');
-    assert.equal(context.summary.totalText, '4 total d20 rolls');
+    assert.equal(context.summary.totalText, '4 total rolls');
     stats.clear();
     stats.update(2);
     stats.update(3);
@@ -259,5 +259,5 @@ test('streak and mode summaries distinguish die result from repetition count', (
     const empty = getLedgerContext({ getFlag: () => stats.toFlagData() });
     assert.equal(empty.summary.modeText, 'No rolls yet');
     assert.equal(empty.summary.streakText, 'No rolls yet');
-    assert.equal(empty.summary.totalText, '0 total d20 rolls');
+    assert.equal(empty.summary.totalText, '0 total rolls');
 });
