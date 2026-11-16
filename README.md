@@ -8,7 +8,7 @@ After the first release is published, use this manifest URL in Foundry's Install
 
 https://github.com/dylanhart/roll-tracker/releases/latest/download/module.json
 
-The root `module.json` stays in the repository so existing installations using the raw `main/module.json` URL can discover the release. The manifest points to a versioned release ZIP containing compiled JavaScript, templates, styles, and translations. GitHub source archives are not installable builds anymore.
+The root `module.json` stays in the repository so existing installations using the raw `main/module.json` URL can discover the release. The source manifest uses the stable latest-release ZIP URL. The build automatically pins the generated manifest to the module version's release ZIP, containing compiled JavaScript, templates, styles, and translations. GitHub source archives are not installable builds anymore.
 
 ## Development
 
@@ -26,10 +26,10 @@ npm test
 
 ## Releases
 
-1. Update `version` in `module.json` and `package.json` (refresh `package-lock.json` with `npm install --package-lock-only`). Update `module.json`'s download URL to the matching `vVERSION` tag.
+1. Update `version` in `module.json` and `package.json` (refresh `package-lock.json` with `npm install --package-lock-only`). The build generates the matching download URL automatically.
 2. Run `npm run package` and `npm test`. In a Foundry 13 world, check GM/player button visibility, roll tracking, stats, clearing, and printing to chat, including Dice So Nice if enabled.
 3. Merge the changes to `main`, then create and push the matching `vVERSION` tag when ready to publish.
 
-CI validates branch/PR builds and uploads an installable artifact. A version tag publishes `module.json` and `roll-tracker.zip` as GitHub Release assets and marks the release latest. The packager rejects tag/version or download/version mismatches. Publish only stable releases through this workflow. The stable manifest URL becomes available after the first successful tagged release; merging alone does not publish assets. Coordinate the first merge and tag so the raw manifest does not point to a release that has not been published yet.
+CI validates branch/PR builds and uploads an installable artifact. A version tag publishes `module.json` and `roll-tracker.zip` as GitHub Release assets and marks the release latest. The packager rejects tag/version mismatches and invalid generated download URLs. Publish only stable releases through this workflow. The stable manifest URL becomes available after the first successful tagged release; merging alone does not publish assets. Coordinate the first merge and tag so the raw manifest does not point to a release that has not been published yet.
 
 The ZIP has `module.json` at its root and contains only built runtime files and the license. `release/` and `dist/` are generated and are not committed.

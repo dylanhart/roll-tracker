@@ -8,7 +8,7 @@ if (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME !== tag
     throw new Error(`Release tag must match module version: ${tag}`);
 }
 const expectedDownload = `https://github.com/dylanhart/roll-tracker/releases/download/${tag}/roll-tracker.zip`;
-if (manifest.download !== expectedDownload) throw new Error('Update manifest.download to match the version');
+if (manifest.download !== expectedDownload) throw new Error('Built manifest download URL does not match the version');
 const files = {};
 function collect(directory) {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {

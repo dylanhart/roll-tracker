@@ -80,6 +80,8 @@ test('chat hook tracks only own d20 rolls and respects hidden-roll settings', as
     assert.equal(saved.histogram[11], 1);
 });
 test('release ZIP contains runtime assets and the exact standalone manifest', () => {
+    const sourceManifest = JSON.parse(readFileSync('module.json', 'utf8'));
+    assert.equal(sourceManifest.download, `${sourceManifest.url}/releases/latest/download/roll-tracker.zip`);
     const files = unzipSync(readFileSync('release/roll-tracker.zip'));
     const manifestText = readFileSync('release/module.json', 'utf8');
     assert.equal(strFromU8(files['module.json']), manifestText);
