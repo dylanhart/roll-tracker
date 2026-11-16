@@ -2,22 +2,24 @@
   "title": "Roll Tracker",
   "description": "A simple module which tracks the d20 rolls made and logs them by each user.",
   "authors": [
-    { "name": "drexl93" },
-    { "name": "dylanhart" }
+    {
+      "name": "drexl93"
+    },
+    {
+      "name": "dylanhart"
+    }
   ],
-    "version": "2.0.3",
-    "minimumCoreVersion": "12.0.0",
-    "compatibleCoreVersion": "12.0.0",
-    "scripts": [
-        "scripts/roll-tracker.js"
-    ],
-    "styles": [
-        "styles/roll-tracker.css"
-    ],
-    "languages": [
-        {
-            "lang": "en",
-            "name": "English",
+  "version": "2.1.0",
+  "scripts": [
+    "scripts/roll-tracker.js"
+  ],
+  "styles": [
+    "styles/roll-tracker.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
       "path": "languages/en.json",
       "flags": {}
     }
@@ -28,7 +30,7 @@
   "download": "https://github.com/dylanhart/roll-tracker/archive/refs/heads/main.zip",
   "id": "roll-tracker",
   "compatibility": {
-    "minimum": "12.0.0",
-    "verified": "12.0.0"
+    "minimum": "13",
+    "verified": "13"
   }
 }
