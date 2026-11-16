@@ -1,4 +1,4 @@
-import { ID, FLAGS } from './config';
+import { FLAGS, ID } from './config';
 import { RollStats, type StatsFlag } from './statistics';
 
 // Reading inside the queue ensures each operation sees the preceding committed write.

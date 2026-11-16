@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
 import { cpSync, readFileSync, writeFileSync } from 'node:fs';
+import { defineConfig } from 'vite';
 
 const manifest = JSON.parse(readFileSync('module.json', 'utf8'));
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
@@ -22,7 +22,7 @@ export default defineConfig({
                     version,
                     download: `${manifest.url}/releases/download/v${version}/roll-tracker.zip`,
                 };
-                writeFileSync('dist/module.json', JSON.stringify(builtManifest, null, 2) + '\n');
+                writeFileSync('dist/module.json', `${JSON.stringify(builtManifest, null, 2)}\n`);
                 if (manifest.esmodules[0] !== 'scripts/roll-tracker.js')
                     throw new Error('Manifest entry does not match build');
             },

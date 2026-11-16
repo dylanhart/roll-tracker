@@ -25,7 +25,7 @@ export class Streak {
     }
 
     update(number: number) {
-        if (number == this.last) {
+        if (number === this.last) {
             this.count += 1;
         } else {
             this.last = number;
@@ -48,7 +48,7 @@ export class RollStats {
     }
 
     static fromFlagData(flagData: StatsFlag) {
-        let rollStats = new RollStats();
+        const rollStats = new RollStats();
         rollStats.histogram = [...flagData.histogram];
         rollStats.streak = Streak.fromFlagData(flagData.streak);
         return rollStats;
@@ -63,7 +63,7 @@ export class RollStats {
 
     update(number: number) {
         if (number < 1 || number > 20) {
-            throw new Error('Dice value out of range: ' + number);
+            throw new Error(`Dice value out of range: ${number}`);
         }
 
         this.histogram[number - 1] += 1;
@@ -96,7 +96,7 @@ export class RollStats {
     }
 
     get median() {
-        if (this.count == 0) {
+        if (this.count === 0) {
             return 0;
         }
 
@@ -113,7 +113,7 @@ export class RollStats {
     }
 
     get mode() {
-        if (this.count == 0) {
+        if (this.count === 0) {
             return {
                 modes: [],
                 count: 0,
@@ -126,7 +126,7 @@ export class RollStats {
             if (curr > count) {
                 modes = [idx + 1];
                 count = curr;
-            } else if (curr == count) {
+            } else if (curr === count) {
                 modes.push(idx + 1);
             }
         });

@@ -1,5 +1,5 @@
 import { TEMPLATES } from './config';
-import { readUserStats, clearTrackedRolls } from './data';
+import { clearTrackedRolls, readUserStats } from './data';
 import { reportTrackingError } from './tracking';
 
 export class RollTrackerDialog extends foundry.appv1.api.FormApplication<User> {
@@ -9,6 +9,7 @@ export class RollTrackerDialog extends foundry.appv1.api.FormApplication<User> {
     }
 
     static get defaultOptions() {
+        // biome-ignore lint/complexity/noThisInStatic: Foundry subclasses extend their inherited application defaults.
         const defaults = super.defaultOptions;
         const overrides = {
             height: 'auto',

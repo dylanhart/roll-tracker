@@ -12,7 +12,8 @@
     margin-right: 0;
 }
 
-.roll-tracker-item-button:hover, .roll-tracker-item-button:focus {
+.roll-tracker-item-button:hover,
+.roll-tracker-item-button:focus {
     box-shadow: none;
     text-shadow: 0 0 5px red;
 }
@@ -20,13 +21,13 @@
 .roll-tracker-form-heading {
     font-size: large;
     font-weight: bold;
-    margin: 0 0 0.4rem
+    margin: 0 0 0.4rem;
 }
 
 .roll-tracker-form-subheading {
     align-self: center;
     font-size: large;
-    margin: 0
+    margin: 0;
 }
 
 .roll-tracker-hist {

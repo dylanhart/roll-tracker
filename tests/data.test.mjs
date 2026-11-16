@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { trackRolls, clearTrackedRolls } from '../src/data.ts';
+import { clearTrackedRolls, trackRolls } from '../src/data.ts';
 import { trackMessage } from '../src/tracking.ts';
 
 const tick = () => new Promise((resolve) => setImmediate(resolve));

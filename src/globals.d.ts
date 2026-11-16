@@ -7,4 +7,3 @@ declare global {
     const ui: typeof UI;
     const Handlebars: typeof HandlebarsAPI;
 }
-export {};

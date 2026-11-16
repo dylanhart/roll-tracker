@@ -9,9 +9,7 @@
       "name": "dylanhart"
     }
   ],
-  "styles": [
-    "styles/roll-tracker.css"
-  ],
+  "styles": ["styles/roll-tracker.css"],
   "languages": [
     {
       "lang": "en",
@@ -29,7 +27,5 @@
     "minimum": "13",
     "verified": "13"
   },
-  "esmodules": [
-    "scripts/roll-tracker.js"
-  ]
+  "esmodules": ["scripts/roll-tracker.js"]
 }

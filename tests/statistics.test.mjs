@@ -24,7 +24,9 @@ test('median averages the middle pair for even samples', () => {
         [[], 0],
     ]) {
         const stats = new RollStats();
-        values.forEach((value) => stats.update(value));
+        values.forEach((value) => {
+            stats.update(value);
+        });
         assert.equal(stats.median, expected);
     }
 });
